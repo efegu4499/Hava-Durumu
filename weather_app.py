@@ -45,14 +45,16 @@ def get_icon_name_for_code(code, hour=None):
     is_night = hour is not None and (hour >= 19 or hour < 5)
     if code in (0, 1):
         return "moon" if is_night else "sun"
-    if code in (2, 3, 45, 48):
+    if code == 2:
+        return "partly_cloudy"
+    if code in (3, 45, 48):
         return "cloud"
     if code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82):
         return "rain"
     if code in (71, 73, 75, 77, 85, 86):
         return "snow"
     if code in (95, 96, 99):
-        return "storm"
+        return "storm_rain"
     return "moon" if is_night else "sun"
 
 

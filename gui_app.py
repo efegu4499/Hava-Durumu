@@ -17,10 +17,13 @@ ASSET_DIR = Path(__file__).with_name("assets")
 BACKGROUND_IMAGE = ASSET_DIR / "weather_bg.gif"
 WEATHER_ICON_FILES = {
     "sun": ASSET_DIR / "sun.gif",
+    "moon": ASSET_DIR / "moon.gif",
     "cloud": ASSET_DIR / "cloud.gif",
+    "partly_cloudy": ASSET_DIR / "partly_cloudy.gif",
     "rain": ASSET_DIR / "rain.gif",
     "snow": ASSET_DIR / "snow.gif",
     "storm": ASSET_DIR / "storm.gif",
+    "storm_rain": ASSET_DIR / "storm_rain.gif",
 }
 
 
