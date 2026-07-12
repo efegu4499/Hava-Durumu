@@ -61,6 +61,25 @@
             border-radius: 12px;
             padding: 12px;
         }
+        .hourly-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            scrollbar-width: thin;
+        }
+        .hourly-item {
+            flex: 0 0 auto;
+            background: #eaf4ff;
+            border-radius: 12px;
+            padding: 10px 12px;
+            text-align: center;
+            min-width: 72px;
+            font-size: 13px;
+        }
+        .hourly-item .h-time { font-weight: bold; color: #0f172a; font-size: 12px; }
+        .hourly-item .h-temp { font-size: 16px; font-weight: bold; color: #1d4ed8; margin: 4px 0; }
+        .hourly-item .h-precip { font-size: 11px; color: #64748b; }
         .error {
             color: #b91c1c;
             font-weight: bold;
@@ -118,6 +137,24 @@
             <p>Nem: {{ weather.humidity }} %</p>
             <p>Rüzgar: {{ weather.wind_speed }} km/s</p>
             <p>Durum: {{ weather.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if hourly %}
+        <div>
+            <h3>Saatlik Tahmin (24 Saat)</h3>
+            <div class="hourly-scroll">
+                {% for item in hourly %}
+                <div class="hourly-item">
+                    <div class="h-time">{{ item.time }}</div>
+                    <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" width="32" height="32"><br>
+                    <div class="h-temp">{{ item.temperature }}°</div>
+                    {% if item.precipitation_probability is not none %}
+                    <div class="h-precip">💧{{ item.precipitation_probability }}%</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
 

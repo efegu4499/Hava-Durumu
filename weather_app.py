@@ -226,6 +226,52 @@ def suggest_locations(query_text, limit=12):
     return suggestions
 
 
+def get_hourly_weather(city_name, hours=24):
+    city = search_city(city_name)
+    url = (
+        "https://api.open-meteo.com/v1/forecast?"
+        f"latitude={city['latitude']}&longitude={city['longitude']}"
+        "&hourly=temperature_2m,weather_code,wind_speed_10m,precipitation_probability"
+        f"&forecast_hours={hours}"
+        "&timezone=auto&language=tr"
+        "&models=ecmwf_ifs025"
+    )
+    data = _get_json(url)
+    hourly = data.get("hourly") or {}
+    times = hourly.get("time") or []
+    temps = hourly.get("temperature_2m") or []
+    codes = hourly.get("weather_code") or []
+    winds = hourly.get("wind_speed_10m") or []
+    precip = hourly.get("precipitation_probability") or []
+
+    now_str = (data.get("current_weather") or {}).get("time") or ""
+    current_hour = now_str[:13] if now_str else ""
+
+    result = []
+    started = False
+    for i, t in enumerate(times):
+        if not started:
+            if t[:13] >= current_hour or not current_hour:
+                started = True
+            else:
+                continue
+        code = codes[i] if i < len(codes) else 0
+        hour_label = t[11:16] if len(t) >= 16 else t
+        result.append({
+            "time": hour_label,
+            "temperature": temps[i] if i < len(temps) else None,
+            "weather_code": code,
+            "description": get_weather_description(code),
+            "icon_name": get_icon_name_for_code(code),
+            "wind_speed": winds[i] if i < len(winds) else None,
+            "precipitation_probability": precip[i] if i < len(precip) else None,
+        })
+        if len(result) >= hours:
+            break
+
+    return result
+
+
 def get_current_weather(city_name):
     city = search_city(city_name)
     weather_url = (

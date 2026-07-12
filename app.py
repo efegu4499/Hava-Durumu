@@ -5,6 +5,7 @@ from weather_app import (
     _normalize_text,
     get_current_weather,
     get_forecast_weather,
+    get_hourly_weather,
     get_weather_description,
     suggest_locations,
 )
@@ -50,9 +51,11 @@ def index():
 
         weather["location_text"] = ", ".join(location_parts)
         weather["description"] = get_weather_description(weather["weather_code"])
+        hourly = get_hourly_weather(city, hours=24)
     except Exception as exc:
         weather = None
         forecast = []
+        hourly = []
         error = str(exc)
     else:
         error = None
@@ -62,6 +65,7 @@ def index():
         city=city,
         weather=weather,
         forecast=forecast,
+        hourly=hourly,
         error=error,
     )
 
