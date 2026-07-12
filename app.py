@@ -1,9 +1,10 @@
+import os
 from flask import Flask, render_template, request
 
 from weather_app import get_current_weather, get_forecast_weather, get_weather_description
 
 app = Flask(__name__)
-app.static_folder = "assets"
+app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
 
 
 @app.route("/", methods=["GET", "POST"])
