@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_file
 
 from weather_app import (
     _normalize_text,
@@ -12,6 +12,11 @@ from weather_app import (
 
 app = Flask(__name__)
 app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
+
+
+@app.route("/google7d6f90b41b936c54.html", methods=["GET"])
+def google_verification():
+    return send_file("google7d6f90b41b936c54.html")
 
 
 @app.route("/api/locations", methods=["GET"])
