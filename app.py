@@ -15,6 +15,14 @@ def index():
         weather = get_current_weather(city)
         forecast_data = get_forecast_weather(city, days=5)
         forecast = forecast_data.get("forecast", [])
+        location_parts = [weather["city"]]
+        if weather.get("admin2") and weather["admin2"] != weather["city"]:
+            location_parts.append(weather["admin2"])
+        if weather.get("admin1") and weather["admin1"] not in location_parts:
+            location_parts.append(weather["admin1"])
+        if weather.get("country"):
+            location_parts.append(weather["country"])
+        weather["location_text"] = ", ".join(location_parts)
         weather["description"] = get_weather_description(weather["weather_code"])
     except Exception as exc:
         weather = None

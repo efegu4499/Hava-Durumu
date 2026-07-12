@@ -166,6 +166,8 @@ def search_city(city_name):
 
     return {
         "name": result["name"],
+        "admin1": result.get("admin1"),
+        "admin2": result.get("admin2"),
         "country": result.get("country", "Bilinmiyor"),
         "latitude": result["latitude"],
         "longitude": result["longitude"],
@@ -185,6 +187,8 @@ def get_current_weather(city_name):
 
     return {
         "city": city["name"],
+        "admin1": city.get("admin1"),
+        "admin2": city.get("admin2"),
         "country": city["country"],
         "temperature": current.get("temperature_2m"),
         "humidity": current.get("relative_humidity_2m"),
@@ -227,6 +231,8 @@ def get_forecast_weather(city_name, days=5):
 
     return {
         "city": city["name"],
+        "admin1": city.get("admin1"),
+        "admin2": city.get("admin2"),
         "country": city["country"],
         "forecast": forecast,
     }
