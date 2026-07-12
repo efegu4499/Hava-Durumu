@@ -58,6 +58,29 @@ def get_icon_name_for_code(code, hour=None):
     return "moon" if is_night else "sun"
 
 
+def get_wind_direction_text(degrees):
+    if degrees is None:
+        return None
+
+    try:
+        value = float(degrees) % 360
+    except (TypeError, ValueError):
+        return None
+
+    directions = [
+        "Kuzey",
+        "Kuzeydoğu",
+        "Doğu",
+        "Güneydoğu",
+        "Güney",
+        "Güneybatı",
+        "Batı",
+        "Kuzeybatı",
+    ]
+    index = int((value + 22.5) // 45) % 8
+    return directions[index]
+
+
 def _get_day_name(date_text):
     day_map = {
         "Mon": "Pzt",
@@ -284,7 +307,7 @@ def get_current_weather(city_name):
     weather_url = (
         "https://api.open-meteo.com/v1/forecast?"
         f"latitude={city['latitude']}&longitude={city['longitude']}"
-        "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
+        "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m"
         "&timezone=auto&language=tr"
         "&models=ecmwf_ifs025"
     )
@@ -299,6 +322,8 @@ def get_current_weather(city_name):
         "temperature": current.get("temperature_2m"),
         "humidity": current.get("relative_humidity_2m"),
         "wind_speed": current.get("wind_speed_10m"),
+        "wind_direction": current.get("wind_direction_10m"),
+        "wind_direction_text": get_wind_direction_text(current.get("wind_direction_10m")),
         "weather_code": current.get("weather_code"),
         "icon_name": get_icon_name_for_code(current.get("weather_code")),
     }
@@ -358,11 +383,12 @@ def format_forecast_lines(forecast_weather):
 def format_weather_report(weather):
     code = weather["weather_code"]
     description = get_weather_description(code)
+    wind_direction_text = weather.get("wind_direction_text") or "Bilinmiyor"
     return (
         f"{weather['city']}, {weather['country']}\n"
         f"Sıcaklık: {weather['temperature']} °C\n"
         f"Nem: {weather['humidity']} %\n"
-        f"Rüzgar: {weather['wind_speed']} km/s\n"
+        f"Rüzgar: {weather['wind_speed']} km/s, {wind_direction_text}\n"
         f"Durum: {description}"
     )
 
