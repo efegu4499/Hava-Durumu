@@ -233,6 +233,7 @@ def get_current_weather(city_name):
         f"latitude={city['latitude']}&longitude={city['longitude']}"
         "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m"
         "&timezone=auto&language=tr"
+        "&models=ecmwf_ifs025"
     )
     data = _get_json(weather_url)
     current = data.get("current") or {}
@@ -258,6 +259,7 @@ def get_forecast_weather(city_name, days=5):
         "&daily=weather_code,temperature_2m_max,temperature_2m_min"
         f"&forecast_days={days}"
         "&timezone=auto&language=tr"
+        "&models=ecmwf_ifs025"
     )
     data = _get_json(forecast_url)
     daily = data.get("daily") or {}
