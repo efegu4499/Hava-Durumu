@@ -18,6 +18,9 @@ class WeatherAppTests(unittest.TestCase):
     def test_rain_icon_maps_to_rain(self):
         self.assertEqual(get_icon_name_for_code(61), "rain")
 
+    def test_freezing_rain_icon_maps_to_sleet(self):
+        self.assertEqual(get_icon_name_for_code(66), "sleet")
+
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [
             {

@@ -22,6 +22,7 @@ WEATHER_ICON_FILES = {
     "partly_cloudy": ASSET_DIR / "partly_cloudy.gif",
     "rain": ASSET_DIR / "rain.gif",
     "snow": ASSET_DIR / "snow.gif",
+    "sleet": ASSET_DIR / "sleet.gif",
     "storm": ASSET_DIR / "storm.gif",
     "storm_rain": ASSET_DIR / "storm_rain.gif",
 }
@@ -65,6 +66,16 @@ def _create_icon_image(path, kind):
         draw.line((78, 98, 78, 110), fill="#ffffff", width=3)
         draw.line((78, 104, 78, 116), fill="#ffffff", width=3)
         draw.line((74, 102, 82, 102), fill="#ffffff", width=3)
+    elif kind == "sleet":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        draw.line((28, 94, 24, 112), fill="#4da3ff", width=4)
+        draw.line((52, 98, 52, 112), fill="#ffffff", width=3)
+        draw.line((52, 104, 52, 116), fill="#ffffff", width=3)
+        draw.line((48, 102, 56, 102), fill="#ffffff", width=3)
+        draw.line((78, 94, 74, 112), fill="#4da3ff", width=4)
     elif kind == "storm":
         draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
         draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")

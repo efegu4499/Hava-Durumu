@@ -49,6 +49,8 @@ def get_icon_name_for_code(code, hour=None):
         return "partly_cloudy"
     if code in (3, 45, 48):
         return "cloud"
+    if code in (56, 57, 66, 67):
+        return "sleet"
     if code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82):
         return "rain"
     if code in (71, 73, 75, 77, 85, 86):
