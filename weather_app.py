@@ -93,8 +93,8 @@ def _split_city_hint(city_name):
     if "," not in city_name:
         return city_name.strip(), None
 
-    city_part, country_part = city_name.split(",", 1)
-    return city_part.strip(), country_part.strip()
+    city_part, location_hint = city_name.split(",", 1)
+    return city_part.strip(), location_hint.strip()
 
 
 def _resolve_country_hint(country_hint):
@@ -109,17 +109,27 @@ def _resolve_country_hint(country_hint):
     return None
 
 
-def pick_best_city_result(city_name, results, preferred_country_code=None):
+def _resolve_province_hint(location_hint):
+    if not location_hint:
+        return None
+    return _normalize_text(location_hint)
+
+
+def pick_best_city_result(
+    city_name,
+    results,
+    preferred_country_code=None,
+    preferred_admin1=None,
+):
     city_name, _ = _split_city_hint(city_name)
     normalized_query = _normalize_text(city_name)
-    preferred_country_code = preferred_country_code or _resolve_country_hint(
-        city_name.split(",", 1)[1] if "," in city_name else None
-    )
+    preferred_admin1 = _normalize_text(preferred_admin1) if preferred_admin1 else None
     score_by_result = []
 
     for result in results:
         name = (result.get("name") or "").strip()
         normalized_name = _normalize_text(name)
+        admin1 = _normalize_text(result.get("admin1") or "")
         country_code = (result.get("country_code") or "").upper()
         country = (result.get("country") or "").lower()
 
@@ -133,6 +143,10 @@ def pick_best_city_result(city_name, results, preferred_country_code=None):
 
         if preferred_country_code and country_code == preferred_country_code:
             score += 15
+        if preferred_admin1 and admin1 == preferred_admin1:
+            score += 12
+        elif preferred_admin1 and preferred_admin1 in admin1:
+            score += 6
         if country_code == "TR":
             score += 8
         if "türkiye" in country or "turkiye" in country:
@@ -150,8 +164,9 @@ def pick_best_city_result(city_name, results, preferred_country_code=None):
 
 
 def search_city(city_name):
-    city_query, country_hint = _split_city_hint(city_name)
-    preferred_country_code = _resolve_country_hint(country_hint)
+    city_query, location_hint = _split_city_hint(city_name)
+    preferred_country_code = _resolve_country_hint(location_hint)
+    preferred_admin1 = None if preferred_country_code else _resolve_province_hint(location_hint)
     query = quote(city_query)
     url = f"https://geocoding-api.open-meteo.com/v1/search?name={query}&count=10&language=tr&format=json"
     data = _get_json(url)
@@ -160,7 +175,12 @@ def search_city(city_name):
     if not results:
         raise ValueError(f"{city_name} için şehir bulunamadı.")
 
-    result = pick_best_city_result(city_query, results, preferred_country_code=preferred_country_code)
+    result = pick_best_city_result(
+        city_query,
+        results,
+        preferred_country_code=preferred_country_code,
+        preferred_admin1=preferred_admin1,
+    )
     if not result:
         result = results[0]
 
@@ -172,6 +192,38 @@ def search_city(city_name):
         "latitude": result["latitude"],
         "longitude": result["longitude"],
     }
+
+
+def suggest_locations(query_text, limit=12):
+    query = (query_text or "").strip()
+    if len(query) < 2:
+        return []
+
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={quote(query)}&count=30&language=tr&format=json"
+    data = _get_json(url)
+    results = data.get("results") or []
+
+    suggestions = []
+    seen = set()
+    for result in results:
+        if result.get("country_code") != "TR":
+            continue
+
+        name = (result.get("name") or "").strip()
+        admin1 = (result.get("admin1") or "").strip()
+        if not name:
+            continue
+
+        label = f"{name}, {admin1}" if admin1 and admin1 != name else name
+        if label in seen:
+            continue
+
+        seen.add(label)
+        suggestions.append({"label": label, "value": label})
+        if len(suggestions) >= limit:
+            break
+
+    return suggestions
 
 
 def get_current_weather(city_name):

@@ -26,11 +26,16 @@
             flex-wrap: wrap;
             margin-bottom: 24px;
         }
+        .search-wrap {
+            position: relative;
+            width: 280px;
+        }
         input[type="text"] {
             padding: 12px 14px;
             width: 280px;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
+            box-sizing: border-box;
         }
         button {
             padding: 12px 16px;
@@ -60,14 +65,44 @@
             color: #b91c1c;
             font-weight: bold;
         }
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+        }
+        .suggestion-item {
+            width: 100%;
+            border: none;
+            background: #ffffff;
+            text-align: left;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #0f172a;
+        }
+        .suggestion-item:hover {
+            background: #eef6ff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Hava Durumu Uygulaması</h1>
 
-        <form method="post">
-            <input type="text" name="city" value="{{ city }}" placeholder="Şehir adı girin">
+        <form id="weather-form" method="post" autocomplete="off">
+            <div class="search-wrap">
+                <input id="city-input" type="text" name="city" value="{{ city }}" placeholder="İlçe veya il adı girin">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
             <button type="submit">Sorgula</button>
         </form>
 
@@ -102,5 +137,71 @@
         </div>
         {% endif %}
     </div>
+
+    <script>
+        const cityInput = document.getElementById("city-input");
+        const suggestionsBox = document.getElementById("suggestions");
+        const form = document.getElementById("weather-form");
+        let activeRequestId = 0;
+
+        function hideSuggestions() {
+            suggestionsBox.style.display = "none";
+            suggestionsBox.innerHTML = "";
+        }
+
+        function showSuggestions(items) {
+            suggestionsBox.innerHTML = "";
+            if (!items.length) {
+                hideSuggestions();
+                return;
+            }
+
+            items.forEach((item) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "suggestion-item";
+                btn.textContent = item.label;
+                btn.addEventListener("click", () => {
+                    cityInput.value = item.value;
+                    hideSuggestions();
+                    form.requestSubmit();
+                });
+                suggestionsBox.appendChild(btn);
+            });
+
+            suggestionsBox.style.display = "block";
+        }
+
+        async function fetchSuggestions(queryText) {
+            const requestId = ++activeRequestId;
+            try {
+                const response = await fetch(`/api/locations?q=${encodeURIComponent(queryText)}`);
+                if (!response.ok || requestId !== activeRequestId) {
+                    return;
+                }
+                const data = await response.json();
+                showSuggestions(data || []);
+            } catch (_) {
+                if (requestId === activeRequestId) {
+                    hideSuggestions();
+                }
+            }
+        }
+
+        cityInput.addEventListener("input", (event) => {
+            const queryText = event.target.value.trim();
+            if (queryText.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            fetchSuggestions(queryText);
+        });
+
+        document.addEventListener("click", (event) => {
+            if (!event.target.closest(".search-wrap")) {
+                hideSuggestions();
+            }
+        });
+    </script>
 </body>
 </html>
