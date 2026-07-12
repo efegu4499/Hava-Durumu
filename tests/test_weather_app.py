@@ -1,0 +1,50 @@
+import unittest
+
+from weather_app import (
+    format_forecast_entry,
+    get_icon_name_for_code,
+    get_weather_description,
+    pick_best_city_result,
+)
+
+
+class WeatherAppTests(unittest.TestCase):
+    def test_clear_sky_code_maps_to_turkish_label(self):
+        self.assertEqual(get_weather_description(0), "Açık")
+
+    def test_clear_sky_icon_maps_to_sun(self):
+        self.assertEqual(get_icon_name_for_code(0), "sun")
+
+    def test_rain_icon_maps_to_rain(self):
+        self.assertEqual(get_icon_name_for_code(61), "rain")
+
+    def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
+        results = [
+            {
+                "name": "Aliaga",
+                "country": "İspanya",
+                "country_code": "ES",
+                "latitude": 40.67411,
+                "longitude": -0.70333,
+            },
+            {
+                "name": "Aliağa",
+                "country": "Türkiye Cumhuriyeti",
+                "country_code": "TR",
+                "latitude": 38.79975,
+                "longitude": 26.97203,
+            },
+        ]
+        selected = pick_best_city_result("Aliağa", results)
+        self.assertEqual(selected["country_code"], "TR")
+        self.assertEqual(selected["name"], "Aliağa")
+
+    def test_sample_forecast_format(self):
+        self.assertEqual(
+            format_forecast_entry("Pazartesi", "İzmir", 32, "Bulutlu"),
+            "Pazartesi - İzmir: 32°C, Bulutlu",
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

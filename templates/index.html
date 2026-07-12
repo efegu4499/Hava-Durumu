@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hava Durumu</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #dff3ff, #8fd3ff);
+            color: #1f2937;
+        }
+        .container {
+            max-width: 920px;
+            margin: 40px auto;
+            padding: 24px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+        }
+        h1 { margin-top: 0; }
+        form {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        input[type="text"] {
+            padding: 12px 14px;
+            width: 280px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+        }
+        button {
+            padding: 12px 16px;
+            border: none;
+            background: #2563eb;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .weather-card {
+            background: #f8fbff;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+        }
+        .forecast-item {
+            background: #eaf4ff;
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .error {
+            color: #b91c1c;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hava Durumu Uygulaması</h1>
+
+        <form method="post">
+            <input type="text" name="city" value="{{ city }}" placeholder="Şehir adı girin">
+            <button type="submit">Sorgula</button>
+        </form>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if weather %}
+        <div class="weather-card">
+            <h2>{{ weather.city }}, {{ weather.country }}</h2>
+            <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
+            <p>Sıcaklık: {{ weather.temperature }} °C</p>
+            <p>Nem: {{ weather.humidity }} %</p>
+            <p>Rüzgar: {{ weather.wind_speed }} km/s</p>
+            <p>Durum: {{ weather.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if forecast %}
+        <div>
+            <h3>5 Günlük Tahmin</h3>
+            <div class="forecast-grid">
+                {% for item in forecast %}
+                <div class="forecast-item">
+                    <strong>{{ item.day_name }}</strong><br>
+                    <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
+                    {{ item.max_temp }}°C / {{ item.min_temp }}°C<br>
+                    {{ item.description }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
