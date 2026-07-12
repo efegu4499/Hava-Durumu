@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gokyra Weather ile Turkiye icin saatlik ve 5 gunluk hava durumu tahmini.">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Gokyra Weather">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <title>Gokyra Weather</title>
     <style>
         body {
@@ -244,6 +252,13 @@
                 hideSuggestions();
             }
         });
+    </script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>

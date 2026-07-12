@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 
 from weather_app import (
     _normalize_text,
@@ -17,6 +17,16 @@ app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
 @app.route("/google7d6f90b41b936c54.html", methods=["GET"])
 def google_verification():
     return send_file("google7d6f90b41b936c54.html")
+
+
+@app.route("/manifest.webmanifest", methods=["GET"])
+def manifest():
+    return send_from_directory(app.static_folder, "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/service-worker.js", methods=["GET"])
+def service_worker():
+    return send_from_directory(app.static_folder, "service-worker.js", mimetype="application/javascript")
 
 
 @app.route("/api/locations", methods=["GET"])
