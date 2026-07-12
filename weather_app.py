@@ -41,9 +41,10 @@ def get_weather_description(code):
     return WEATHER_CODES.get(code, "Bilinmeyen")
 
 
-def get_icon_name_for_code(code):
+def get_icon_name_for_code(code, hour=None):
+    is_night = hour is not None and (hour >= 19 or hour < 5)
     if code in (0, 1):
-        return "sun"
+        return "moon" if is_night else "sun"
     if code in (2, 3, 45, 48):
         return "cloud"
     if code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82):
@@ -52,7 +53,7 @@ def get_icon_name_for_code(code):
         return "snow"
     if code in (95, 96, 99):
         return "storm"
-    return "sun"
+    return "moon" if is_night else "sun"
 
 
 def _get_day_name(date_text):
@@ -257,12 +258,16 @@ def get_hourly_weather(city_name, hours=24):
                 continue
         code = codes[i] if i < len(codes) else 0
         hour_label = t[11:16] if len(t) >= 16 else t
+        try:
+            hour_int = int(t[11:13]) if len(t) >= 13 else None
+        except ValueError:
+            hour_int = None
         result.append({
             "time": hour_label,
             "temperature": temps[i] if i < len(temps) else None,
             "weather_code": code,
             "description": get_weather_description(code),
-            "icon_name": get_icon_name_for_code(code),
+            "icon_name": get_icon_name_for_code(code, hour=hour_int),
             "wind_speed": winds[i] if i < len(winds) else None,
             "precipitation_probability": precip[i] if i < len(precip) else None,
         })
