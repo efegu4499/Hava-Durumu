@@ -2,6 +2,7 @@ import os
 from flask import Flask, jsonify, render_template, request
 
 from weather_app import (
+    _normalize_text,
     get_current_weather,
     get_forecast_weather,
     get_weather_description,
@@ -34,13 +35,19 @@ def index():
         weather = get_current_weather(city)
         forecast_data = get_forecast_weather(city, days=5)
         forecast = forecast_data.get("forecast", [])
+        city_norm = _normalize_text(weather["city"])
+        seen_norms = {city_norm}
         location_parts = [weather["city"]]
-        if weather.get("admin2") and weather["admin2"] != weather["city"]:
-            location_parts.append(weather["admin2"])
-        if weather.get("admin1") and weather["admin1"] not in location_parts:
-            location_parts.append(weather["admin1"])
+
+        for field in ("admin2", "admin1"):
+            val = weather.get(field) or ""
+            if val and _normalize_text(val) not in seen_norms:
+                seen_norms.add(_normalize_text(val))
+                location_parts.append(val)
+
         if weather.get("country"):
             location_parts.append(weather["country"])
+
         weather["location_text"] = ", ".join(location_parts)
         weather["description"] = get_weather_description(weather["weather_code"])
     except Exception as exc:
