@@ -13,14 +13,23 @@ class DailySummaryTests(unittest.TestCase):
 
         self.assertIn("Sel ve taşkın ihtimaline dikkat.", summary)
 
-    def test_snow_warning_added_when_snow_expected(self):
+    def test_snow_warning_added_for_daily_snow_20cm_or_more(self):
         weather = {"temperature": 0, "description": "Kar yağışlı", "wind_speed": 8}
-        forecast = [{"max_temp": 2, "min_temp": -2, "precipitation_sum_mm": 0, "snowfall_sum_cm": 4}]
+        forecast = [{"max_temp": 2, "min_temp": -2, "precipitation_sum_mm": 0, "snowfall_sum_cm": 20}]
         hourly = [{"precipitation_mm": 0, "snowfall_cm": 1.2, "temperature": 0}]
 
         summary = build_daily_summary(weather, forecast, hourly)
 
         self.assertIn("Yollar kapanabilir, kar lastiği ve zincir takınız mutlaka.", summary)
+
+    def test_snow_warning_not_added_below_20cm_daily_even_if_hourly_snow_exists(self):
+        weather = {"temperature": 0, "description": "Kar yağışlı", "wind_speed": 8}
+        forecast = [{"max_temp": 2, "min_temp": -2, "precipitation_sum_mm": 0, "snowfall_sum_cm": 19.9}]
+        hourly = [{"precipitation_mm": 0, "snowfall_cm": 3.0, "temperature": 0}]
+
+        summary = build_daily_summary(weather, forecast, hourly)
+
+        self.assertNotIn("Yollar kapanabilir, kar lastiği ve zincir takınız mutlaka.", summary)
 
 
 if __name__ == "__main__":

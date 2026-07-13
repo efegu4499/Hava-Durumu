@@ -70,7 +70,8 @@ def build_daily_summary(weather, forecast, hourly):
         if snow_cm is not None:
             if snow_cm > 0:
                 parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
-                snow_warning_needed = True
+                if snow_cm >= 20:
+                    snow_warning_needed = True
             elif cold_enough_for_snow:
                 parts.append("Bugün kar yağışı beklenmiyor.")
 
@@ -90,7 +91,6 @@ def build_daily_summary(weather, forecast, hourly):
 
         if peak_snow > 0:
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
-            snow_warning_needed = True
         elif cold_next_hours:
             parts.append("Önümüzdeki saatlerde kar beklenmiyor.")
 
