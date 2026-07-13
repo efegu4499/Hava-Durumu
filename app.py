@@ -14,6 +14,18 @@ app = Flask(__name__)
 app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
 
 
+def get_background_theme(weather_code):
+    if weather_code in (0, 1, 2):
+        return "sunny"
+    if weather_code in (3, 45, 48):
+        return "cloudy"
+    if weather_code in (71, 73, 75, 77, 85, 86):
+        return "snowy"
+    if weather_code in (51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99):
+        return "rainy"
+    return "cloudy"
+
+
 def build_daily_summary(weather, forecast, hourly):
     if not weather:
         return None
@@ -140,11 +152,13 @@ def index():
         weather["description"] = get_weather_description(weather["weather_code"])
         hourly = get_hourly_weather(city, hours=24)
         day_summary = build_daily_summary(weather, forecast, hourly)
+        weather_theme = get_background_theme(weather.get("weather_code"))
     except Exception as exc:
         weather = None
         forecast = []
         hourly = []
         day_summary = None
+        weather_theme = "cloudy"
         error = str(exc)
     else:
         error = None
@@ -156,6 +170,7 @@ def index():
         forecast=forecast,
         hourly=hourly,
         day_summary=day_summary,
+        weather_theme=weather_theme,
         error=error,
     )
 
