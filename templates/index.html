@@ -93,6 +93,7 @@
         .hourly-item .h-time { font-weight: bold; color: #94a3b8; font-size: 12px; }
         .hourly-item .h-temp { font-size: 16px; font-weight: bold; color: #ffffff; margin: 4px 0; }
         .hourly-item .h-precip { font-size: 11px; color: #7dd3fc; }
+        .hourly-item .h-desc { font-size: 11px; color: #d1d5db; margin-top: 3px; }
         .error {
             color: #b91c1c;
             font-weight: bold;
@@ -163,8 +164,9 @@
                     <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" width="32" height="32"><br>
                     <div class="h-temp">{{ item.temperature }}°</div>
                     {% if item.precipitation_probability is not none %}
-                    <div class="h-precip">💧{{ item.precipitation_probability }}%</div>
+                    <div class="h-precip">💧{{ item.precipitation_probability }}%{% if item.precipitation_mm is not none %} | {{ item.precipitation_mm }} mm{% endif %}</div>
                     {% endif %}
+                    <div class="h-desc">{{ item.description }}</div>
                 </div>
                 {% endfor %}
             </div>
@@ -180,7 +182,7 @@
                     <strong>{{ item.day_name }}</strong><br>
                     <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
                     {{ item.max_temp }}°C / {{ item.min_temp }}°C<br>
-                    {{ item.description }}
+                    {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yağış: {{ item.precipitation_sum_mm }} mm{% endif %}
                 </div>
                 {% endfor %}
             </div>
