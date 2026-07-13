@@ -25,6 +25,9 @@ WEATHER_ICON_FILES = {
     "rain_3drop": ASSET_DIR / "rain_3drop.gif",
     "rain_6drop": ASSET_DIR / "rain_6drop.gif",
     "snow": ASSET_DIR / "snow.gif",
+    "snow_1flake": ASSET_DIR / "snow_1flake.gif",
+    "snow_3flake": ASSET_DIR / "snow_3flake.gif",
+    "snow_6flake": ASSET_DIR / "snow_6flake.gif",
     "sleet": ASSET_DIR / "sleet.gif",
     "storm": ASSET_DIR / "storm.gif",
     "storm_rain": ASSET_DIR / "storm_rain.gif",
@@ -94,6 +97,35 @@ def _create_icon_image(path, kind):
         draw.line((78, 98, 78, 110), fill="#ffffff", width=3)
         draw.line((78, 104, 78, 116), fill="#ffffff", width=3)
         draw.line((74, 102, 82, 102), fill="#ffffff", width=3)
+    elif kind == "snow_1flake":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        draw.line((60, 98, 60, 114), fill="#ffffff", width=3)
+        draw.line((54, 106, 66, 106), fill="#ffffff", width=3)
+        draw.line((55, 101, 65, 111), fill="#ffffff", width=3)
+        draw.line((65, 101, 55, 111), fill="#ffffff", width=3)
+    elif kind == "snow_3flake":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x in (34, 60, 86):
+            draw.line((x, 98, x, 114), fill="#ffffff", width=3)
+            draw.line((x - 6, 106, x + 6, 106), fill="#ffffff", width=3)
+            draw.line((x - 5, 101, x + 5, 111), fill="#ffffff", width=3)
+            draw.line((x + 5, 101, x - 5, 111), fill="#ffffff", width=3)
+    elif kind == "snow_6flake":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x, y in ((26, 98), (42, 98), (58, 98), (74, 98), (90, 98), (106, 98)):
+            draw.line((x, y, x, y + 12), fill="#ffffff", width=2)
+            draw.line((x - 4, y + 6, x + 4, y + 6), fill="#ffffff", width=2)
+            draw.line((x - 3, y + 2, x + 3, y + 10), fill="#ffffff", width=2)
+            draw.line((x + 3, y + 2, x - 3, y + 10), fill="#ffffff", width=2)
     elif kind == "sleet":
         draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
         draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")

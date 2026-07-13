@@ -4,6 +4,7 @@ from weather_app import (
     format_forecast_entry,
     get_icon_name_for_code,
     get_rain_intensity_style,
+    get_snow_intensity_style,
     get_weather_description,
     pick_best_city_result,
 )
@@ -31,6 +32,16 @@ class WeatherAppTests(unittest.TestCase):
         label, icon = get_rain_intensity_style(16, period="daily")
         self.assertEqual(label, "Çok Şiddetli Yağmur")
         self.assertEqual(icon, "rain_6drop")
+
+    def test_hourly_light_snow_maps_to_single_flake_icon(self):
+        label, icon = get_snow_intensity_style(0.3, period="hourly")
+        self.assertEqual(label, "Hafif Şiddetli Kar")
+        self.assertEqual(icon, "snow_1flake")
+
+    def test_daily_heavy_snow_maps_to_six_flake_icon(self):
+        label, icon = get_snow_intensity_style(12, period="daily")
+        self.assertEqual(label, "Çok Şiddetli Kar")
+        self.assertEqual(icon, "snow_6flake")
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

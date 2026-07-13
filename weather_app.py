@@ -109,6 +109,32 @@ def get_rain_intensity_style(mm_amount, period="hourly"):
     return "Çok Şiddetli Yağmur", "rain_6drop"
 
 
+def get_snow_intensity_style(cm_amount, period="hourly"):
+    if cm_amount is None:
+        return None, None
+
+    try:
+        cm = float(cm_amount)
+    except (TypeError, ValueError):
+        return None, None
+
+    if cm <= 0:
+        return None, None
+
+    if period == "daily":
+        if cm < 2:
+            return "Hafif Şiddetli Kar", "snow_1flake"
+        if cm < 10:
+            return "Şiddetli Kar", "snow_3flake"
+        return "Çok Şiddetli Kar", "snow_6flake"
+
+    if cm < 0.5:
+        return "Hafif Şiddetli Kar", "snow_1flake"
+    if cm < 2:
+        return "Şiddetli Kar", "snow_3flake"
+    return "Çok Şiddetli Kar", "snow_6flake"
+
+
 def _get_day_name(date_text):
     day_map = {
         "Mon": "Pzt",
@@ -285,7 +311,7 @@ def get_hourly_weather(city_name, hours=24):
     url = (
         "https://api.open-meteo.com/v1/forecast?"
         f"latitude={city['latitude']}&longitude={city['longitude']}"
-        "&hourly=temperature_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation"
+        "&hourly=temperature_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,snowfall"
         f"&forecast_hours={hours}"
         "&timezone=auto&language=tr"
         "&models=ecmwf_ifs025"
@@ -298,8 +324,10 @@ def get_hourly_weather(city_name, hours=24):
     winds = hourly.get("wind_speed_10m") or []
     precip = hourly.get("precipitation_probability") or []
     precip_mm_values = hourly.get("precipitation") or []
+    snow_cm_values = hourly.get("snowfall") or []
 
     rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
+    snow_like_codes = {71, 73, 75, 77, 85, 86}
 
     now_str = (data.get("current_weather") or {}).get("time") or ""
     current_hour = now_str[:13] if now_str else ""
@@ -319,6 +347,7 @@ def get_hourly_weather(city_name, hours=24):
         except ValueError:
             hour_int = None
         precip_mm = precip_mm_values[i] if i < len(precip_mm_values) else None
+        snow_cm = snow_cm_values[i] if i < len(snow_cm_values) else None
         description = get_weather_description(code)
         icon_name = get_icon_name_for_code(code, hour=hour_int)
         rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
@@ -327,6 +356,12 @@ def get_hourly_weather(city_name, hours=24):
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
+        snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
+            snow_cm, period="hourly"
+        )
+        if code in snow_like_codes and snow_intensity_text:
+            description = snow_intensity_text
+            icon_name = snow_intensity_icon or icon_name
         result.append({
             "time": hour_label,
             "temperature": temps[i] if i < len(temps) else None,
@@ -336,6 +371,7 @@ def get_hourly_weather(city_name, hours=24):
             "wind_speed": winds[i] if i < len(winds) else None,
             "precipitation_probability": precip[i] if i < len(precip) else None,
             "precipitation_mm": precip_mm,
+            "snowfall_cm": snow_cm,
         })
         if len(result) >= hours:
             break
@@ -375,7 +411,7 @@ def get_forecast_weather(city_name, days=5):
     forecast_url = (
         "https://api.open-meteo.com/v1/forecast?"
         f"latitude={city['latitude']}&longitude={city['longitude']}"
-        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum"
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum"
         f"&forecast_days={days}"
         "&timezone=auto&language=tr"
         "&models=ecmwf_ifs025"
@@ -387,13 +423,16 @@ def get_forecast_weather(city_name, days=5):
     max_temps = daily.get("temperature_2m_max") or []
     min_temps = daily.get("temperature_2m_min") or []
     precip_sum = daily.get("precipitation_sum") or []
+    snow_sum = daily.get("snowfall_sum") or []
 
     rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
+    snow_like_codes = {71, 73, 75, 77, 85, 86}
 
     forecast = []
     for index, date_text in enumerate(times):
         code = codes[index] if index < len(codes) else 0
         day_precip_mm = precip_sum[index] if index < len(precip_sum) else None
+        day_snow_cm = snow_sum[index] if index < len(snow_sum) else None
         description = get_weather_description(code)
         icon_name = get_icon_name_for_code(code)
         rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
@@ -402,6 +441,12 @@ def get_forecast_weather(city_name, days=5):
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
+        snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
+            day_snow_cm, period="daily"
+        )
+        if code in snow_like_codes and snow_intensity_text:
+            description = snow_intensity_text
+            icon_name = snow_intensity_icon or icon_name
         forecast.append(
             {
                 "date": date_text,
@@ -412,6 +457,7 @@ def get_forecast_weather(city_name, days=5):
                 "min_temp": min_temps[index],
                 "icon_name": icon_name,
                 "precipitation_sum_mm": day_precip_mm,
+                "snowfall_sum_cm": day_snow_cm,
             }
         )
 

@@ -221,7 +221,7 @@
                     <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" width="32" height="32"><br>
                     <div class="h-temp">{{ item.temperature }}°</div>
                     {% if item.precipitation_probability is not none %}
-                    <div class="h-precip">💧{{ item.precipitation_probability }}%{% if item.precipitation_mm is not none %} | {{ item.precipitation_mm }} mm{% endif %}</div>
+                    <div class="h-precip">💧{{ item.precipitation_probability }}%{% if item.precipitation_mm is not none %} | {{ item.precipitation_mm }} mm{% endif %}{% if item.snowfall_cm is not none and item.snowfall_cm > 0 %} | ❄ {{ item.snowfall_cm }} cm{% endif %}</div>
                     {% endif %}
                     <div class="h-desc">{{ item.description }}</div>
                 </div>
@@ -239,7 +239,7 @@
                     <strong>{{ item.day_name }}</strong><br>
                     <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
                     {{ item.max_temp }}°C / {{ item.min_temp }}°C<br>
-                    {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yağış: {{ item.precipitation_sum_mm }} mm{% endif %}
+                    {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yağış: {{ item.precipitation_sum_mm }} mm{% endif %}{% if item.snowfall_sum_cm is not none and item.snowfall_sum_cm > 0 %}<br>Kar: {{ item.snowfall_sum_cm }} cm{% endif %}
                 </div>
                 {% endfor %}
             </div>
