@@ -21,6 +21,9 @@ WEATHER_ICON_FILES = {
     "cloud": ASSET_DIR / "cloud.gif",
     "partly_cloudy": ASSET_DIR / "partly_cloudy.gif",
     "rain": ASSET_DIR / "rain.gif",
+    "rain_1drop": ASSET_DIR / "rain_1drop.gif",
+    "rain_3drop": ASSET_DIR / "rain_3drop.gif",
+    "rain_6drop": ASSET_DIR / "rain_6drop.gif",
     "snow": ASSET_DIR / "snow.gif",
     "sleet": ASSET_DIR / "sleet.gif",
     "storm": ASSET_DIR / "storm.gif",
@@ -55,6 +58,31 @@ def _create_icon_image(path, kind):
         draw.line((30, 96, 24, 112), fill="#4da3ff", width=4)
         draw.line((52, 96, 46, 112), fill="#4da3ff", width=4)
         draw.line((74, 96, 68, 112), fill="#4da3ff", width=4)
+    elif kind == "rain_1drop":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        draw.line((60, 94, 54, 112), fill="#4da3ff", width=5)
+    elif kind == "rain_3drop":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        draw.line((30, 96, 24, 112), fill="#4da3ff", width=4)
+        draw.line((52, 96, 46, 112), fill="#4da3ff", width=4)
+        draw.line((74, 96, 68, 112), fill="#4da3ff", width=4)
+    elif kind == "rain_6drop":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        draw.line((22, 94, 16, 112), fill="#4da3ff", width=4)
+        draw.line((38, 94, 32, 112), fill="#4da3ff", width=4)
+        draw.line((54, 94, 48, 112), fill="#4da3ff", width=4)
+        draw.line((70, 94, 64, 112), fill="#4da3ff", width=4)
+        draw.line((86, 94, 80, 112), fill="#4da3ff", width=4)
+        draw.line((102, 94, 96, 112), fill="#4da3ff", width=4)
     elif kind == "snow":
         draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
         draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")

@@ -83,34 +83,30 @@ def get_wind_direction_text(degrees):
     return directions[index]
 
 
-def get_rain_intensity_text(mm_amount, period="hourly"):
+def get_rain_intensity_style(mm_amount, period="hourly"):
     if mm_amount is None:
-        return None
+        return None, None
 
     try:
         mm = float(mm_amount)
     except (TypeError, ValueError):
-        return None
+        return None, None
 
     if mm <= 0:
-        return None
+        return None, None
 
     if period == "daily":
         if mm < 2:
-            return "Hafif Yağmur"
-        if mm < 10:
-            return "Yağmur"
-        if mm < 25:
-            return "Sağanak Yağmur"
-        return "Şiddetli Yağmur"
+            return "Hafif Şiddetli Yağmur", "rain_1drop"
+        if mm < 12:
+            return "Şiddetli Yağmur", "rain_3drop"
+        return "Çok Şiddetli Yağmur", "rain_6drop"
 
-    if mm < 0.5:
-        return "Hafif Yağmur"
+    if mm < 0.7:
+        return "Hafif Şiddetli Yağmur", "rain_1drop"
     if mm < 4:
-        return "Yağmur"
-    if mm < 10:
-        return "Sağanak Yağmur"
-    return "Şiddetli Yağmur"
+        return "Şiddetli Yağmur", "rain_3drop"
+    return "Çok Şiddetli Yağmur", "rain_6drop"
 
 
 def _get_day_name(date_text):
@@ -303,9 +299,7 @@ def get_hourly_weather(city_name, hours=24):
     precip = hourly.get("precipitation_probability") or []
     precip_mm_values = hourly.get("precipitation") or []
 
-    rain_like_codes = {
-        51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99
-    }
+    rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
 
     now_str = (data.get("current_weather") or {}).get("time") or ""
     current_hour = now_str[:13] if now_str else ""
@@ -326,15 +320,19 @@ def get_hourly_weather(city_name, hours=24):
             hour_int = None
         precip_mm = precip_mm_values[i] if i < len(precip_mm_values) else None
         description = get_weather_description(code)
-        rain_intensity = get_rain_intensity_text(precip_mm, period="hourly")
-        if code in rain_like_codes and rain_intensity:
-            description = rain_intensity
+        icon_name = get_icon_name_for_code(code, hour=hour_int)
+        rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
+            precip_mm, period="hourly"
+        )
+        if code in rain_like_codes and rain_intensity_text:
+            description = rain_intensity_text
+            icon_name = rain_intensity_icon or icon_name
         result.append({
             "time": hour_label,
             "temperature": temps[i] if i < len(temps) else None,
             "weather_code": code,
             "description": description,
-            "icon_name": get_icon_name_for_code(code, hour=hour_int),
+            "icon_name": icon_name,
             "wind_speed": winds[i] if i < len(winds) else None,
             "precipitation_probability": precip[i] if i < len(precip) else None,
             "precipitation_mm": precip_mm,
@@ -390,18 +388,20 @@ def get_forecast_weather(city_name, days=5):
     min_temps = daily.get("temperature_2m_min") or []
     precip_sum = daily.get("precipitation_sum") or []
 
-    rain_like_codes = {
-        51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99
-    }
+    rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
 
     forecast = []
     for index, date_text in enumerate(times):
         code = codes[index] if index < len(codes) else 0
         day_precip_mm = precip_sum[index] if index < len(precip_sum) else None
         description = get_weather_description(code)
-        rain_intensity = get_rain_intensity_text(day_precip_mm, period="daily")
-        if code in rain_like_codes and rain_intensity:
-            description = rain_intensity
+        icon_name = get_icon_name_for_code(code)
+        rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
+            day_precip_mm, period="daily"
+        )
+        if code in rain_like_codes and rain_intensity_text:
+            description = rain_intensity_text
+            icon_name = rain_intensity_icon or icon_name
         forecast.append(
             {
                 "date": date_text,
@@ -410,7 +410,7 @@ def get_forecast_weather(city_name, days=5):
                 "description": description,
                 "max_temp": max_temps[index],
                 "min_temp": min_temps[index],
-                "icon_name": get_icon_name_for_code(code),
+                "icon_name": icon_name,
                 "precipitation_sum_mm": day_precip_mm,
             }
         )
