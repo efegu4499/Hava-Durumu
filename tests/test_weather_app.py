@@ -4,6 +4,7 @@ from weather_app import (
     format_forecast_entry,
     get_icon_name_for_code,
     get_rain_intensity_style,
+    get_wind_direction_arrow,
     get_snow_intensity_style,
     get_weather_description,
     pick_best_city_result,
@@ -42,6 +43,9 @@ class WeatherAppTests(unittest.TestCase):
         label, icon = get_snow_intensity_style(12, period="daily")
         self.assertEqual(label, "Çok Şiddetli Kar")
         self.assertEqual(icon, "snow_6flake")
+
+    def test_wind_direction_arrow_maps_northeast(self):
+        self.assertEqual(get_wind_direction_arrow(45), "↗")
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

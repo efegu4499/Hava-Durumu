@@ -83,6 +83,20 @@ def get_wind_direction_text(degrees):
     return directions[index]
 
 
+def get_wind_direction_arrow(degrees):
+    if degrees is None:
+        return None
+
+    try:
+        value = float(degrees) % 360
+    except (TypeError, ValueError):
+        return None
+
+    arrows = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"]
+    index = int((value + 22.5) // 45) % 8
+    return arrows[index]
+
+
 def get_rain_intensity_style(mm_amount, period="hourly"):
     if mm_amount is None:
         return None, None
@@ -401,6 +415,7 @@ def get_current_weather(city_name):
         "wind_speed": current.get("wind_speed_10m"),
         "wind_direction": current.get("wind_direction_10m"),
         "wind_direction_text": get_wind_direction_text(current.get("wind_direction_10m")),
+        "wind_direction_arrow": get_wind_direction_arrow(current.get("wind_direction_10m")),
         "weather_code": current.get("weather_code"),
         "icon_name": get_icon_name_for_code(current.get("weather_code")),
     }

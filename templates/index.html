@@ -206,7 +206,7 @@
             <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
             <p>Sıcaklık: {{ weather.temperature }} °C</p>
             <p>Nem: {{ weather.humidity }} %</p>
-            <p>Rüzgar: {{ weather.wind_speed }} km/s{% if weather.wind_direction_text %}, {{ weather.wind_direction_text }}{% endif %}</p>
+            <p>Rüzgar: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>
             <p>Durum: {{ weather.description }}</p>
         </div>
         {% endif %}

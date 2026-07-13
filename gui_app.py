@@ -300,7 +300,14 @@ class WeatherWindow:
             self.temp_var.set(f"{weather['temperature']} °C")
             self.status_var.set(get_weather_description(code))
             self.humidity_var.set(f"{weather['humidity']} %")
-            self.wind_var.set(f"{weather['wind_speed']} km/s")
+            arrow = weather.get("wind_direction_arrow") or ""
+            direction = weather.get("wind_direction_text") or ""
+            wind_parts = [f"{weather['wind_speed']} km/s"]
+            if arrow:
+                wind_parts.append(arrow)
+            if direction:
+                wind_parts.append(direction)
+            self.wind_var.set(" ".join(wind_parts))
             self.icon_label.configure(image=self.icon_images[icon_name])
             self.icon_label.image = self.icon_images[icon_name]
             self.forecast_var.set(format_forecast_lines(forecast_weather))
