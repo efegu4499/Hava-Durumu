@@ -33,10 +33,16 @@ def build_daily_summary(weather, forecast, hourly):
 
         rain_mm = today.get("precipitation_sum_mm")
         snow_cm = today.get("snowfall_sum_cm")
-        if rain_mm is not None and rain_mm > 0:
-            parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
-        if snow_cm is not None and snow_cm > 0:
-            parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
+        if rain_mm is not None:
+            if rain_mm > 0:
+                parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
+            else:
+                parts.append("Bugün yağış beklenmiyor.")
+        if snow_cm is not None:
+            if snow_cm > 0:
+                parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
+            else:
+                parts.append("Bugün kar yağışı beklenmiyor.")
 
     if hourly:
         next_hours = hourly[:6]
@@ -44,8 +50,12 @@ def build_daily_summary(weather, forecast, hourly):
         peak_snow = max((item.get("snowfall_cm") or 0) for item in next_hours) if next_hours else 0
         if peak_rain > 0:
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik yağış {peak_rain} mm.")
+        else:
+            parts.append("Önümüzdeki saatlerde yağış beklenmiyor.")
         if peak_snow > 0:
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
+        else:
+            parts.append("Önümüzdeki saatlerde kar beklenmiyor.")
 
     wind_speed = weather.get("wind_speed")
     wind_direction = weather.get("wind_direction_text")
