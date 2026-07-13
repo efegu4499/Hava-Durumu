@@ -568,6 +568,13 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+
+        /* Keep interface weather-focused by disabling extra game/menu overlays. */
+        .toolbar,
+        .mini-drawer,
+        .settings-overlay {
+            display: none !important;
+        }
     </style>
 </head>
 <body class="theme-{{ weather_theme|default('cloudy') }}">
@@ -943,8 +950,8 @@
 
         function readDrawerItems() {
             const fallback = {
-                left: ["Profil", "Harita", "Oyun"],
-                right: ["Not", "Takvim", "Tema"],
+                left: [],
+                right: [],
             };
             const data = readJSON(DRAWER_ITEMS_KEY, fallback);
             return {
