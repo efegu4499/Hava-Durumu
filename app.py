@@ -31,6 +31,7 @@ def build_daily_summary(weather, forecast, hourly):
         return None
 
     parts = []
+    snow_warning_needed = False
     temp = weather.get("temperature")
     felt_temp = weather.get("felt_temperature")
     desc = weather.get("description")
@@ -56,6 +57,8 @@ def build_daily_summary(weather, forecast, hourly):
         if rain_mm is not None:
             if rain_mm > 0:
                 parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
+                if rain_mm > 50:
+                    parts.append("Sel ve taşkın ihtimaline dikkat.")
             else:
                 parts.append("Bugün yağış beklenmiyor.")
         # Only mention "no snow" when temperatures are realistically close to snow conditions.
@@ -67,6 +70,7 @@ def build_daily_summary(weather, forecast, hourly):
         if snow_cm is not None:
             if snow_cm > 0:
                 parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
+                snow_warning_needed = True
             elif cold_enough_for_snow:
                 parts.append("Bugün kar yağışı beklenmiyor.")
 
@@ -86,6 +90,7 @@ def build_daily_summary(weather, forecast, hourly):
 
         if peak_snow > 0:
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
+            snow_warning_needed = True
         elif cold_next_hours:
             parts.append("Önümüzdeki saatlerde kar beklenmiyor.")
 
@@ -96,6 +101,9 @@ def build_daily_summary(weather, forecast, hourly):
             parts.append(f"Rüzgar {wind_speed} km/s, {wind_direction.lower()} yönünde.")
         else:
             parts.append(f"Rüzgar hızı {wind_speed} km/s.")
+
+    if snow_warning_needed:
+        parts.append("Yollar kapanabilir, kar lastiği ve zincir takınız mutlaka.")
 
     if not parts:
         return "Bugünün özeti için veri hazırlanıyor."

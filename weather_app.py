@@ -109,18 +109,31 @@ def get_rain_intensity_style(mm_amount, period="hourly"):
     if mm <= 0:
         return None, None
 
-    if period == "daily":
-        if mm < 2:
-            return "Hafif Şiddetli Yağmur", "rain_1drop"
-        if mm < 12:
-            return "Şiddetli Yağmur", "rain_3drop"
-        return "Çok Şiddetli Yağmur", "rain_6drop"
+    if mm < 5:
+        return "Hafif Yağmur", "rain_1drop"
+    if mm < 20:
+        return "Yağmurlu", "rain_3drop"
+    if mm < 50:
+        return "Kuvvetli Yağmur", "rain_5drop"
+    return "Aşırı Kuvvetli Yağmur", "rain_10drop"
 
-    if mm < 0.7:
-        return "Hafif Şiddetli Yağmur", "rain_1drop"
-    if mm < 4:
-        return "Şiddetli Yağmur", "rain_3drop"
-    return "Çok Şiddetli Yağmur", "rain_6drop"
+
+def get_thunder_rain_description(mm_amount):
+    if mm_amount is None:
+        return "Gök Gürültülü Yağmur"
+
+    try:
+        mm = float(mm_amount)
+    except (TypeError, ValueError):
+        return "Gök Gürültülü Yağmur"
+
+    if mm <= 0:
+        return "Gök Gürültülü Yağmur"
+    if mm < 20:
+        return "Gök Gürültülü Hafif Yağmur"
+    if mm < 50:
+        return "Gök Gürültülü Kuvvetli Yağmur"
+    return "Gök Gürültülü Aşırı Kuvvetli Yağmur"
 
 
 def get_snow_intensity_style(cm_amount, period="hourly"):
@@ -341,6 +354,7 @@ def get_hourly_weather(city_name, hours=24):
     snow_cm_values = hourly.get("snowfall") or []
 
     rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
+    thunder_like_codes = {95, 96, 99}
     snow_like_codes = {71, 73, 75, 77, 85, 86}
 
     now_str = (data.get("current_weather") or {}).get("time") or ""
@@ -370,6 +384,10 @@ def get_hourly_weather(city_name, hours=24):
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
+        elif code in thunder_like_codes:
+            description = get_thunder_rain_description(precip_mm)
+            if rain_intensity_icon:
+                icon_name = rain_intensity_icon
         snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
             snow_cm, period="hourly"
         )
@@ -442,6 +460,7 @@ def get_forecast_weather(city_name, days=5):
     snow_sum = daily.get("snowfall_sum") or []
 
     rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
+    thunder_like_codes = {95, 96, 99}
     snow_like_codes = {71, 73, 75, 77, 85, 86}
 
     forecast = []
@@ -457,6 +476,10 @@ def get_forecast_weather(city_name, days=5):
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
+        elif code in thunder_like_codes:
+            description = get_thunder_rain_description(day_precip_mm)
+            if rain_intensity_icon:
+                icon_name = rain_intensity_icon
         snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
             day_snow_cm, period="daily"
         )

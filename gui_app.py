@@ -23,7 +23,9 @@ WEATHER_ICON_FILES = {
     "rain": ASSET_DIR / "rain.gif",
     "rain_1drop": ASSET_DIR / "rain_1drop.gif",
     "rain_3drop": ASSET_DIR / "rain_3drop.gif",
+    "rain_5drop": ASSET_DIR / "rain_5drop.gif",
     "rain_6drop": ASSET_DIR / "rain_6drop.gif",
+    "rain_10drop": ASSET_DIR / "rain_10drop.gif",
     "snow": ASSET_DIR / "snow.gif",
     "snow_1flake": ASSET_DIR / "snow_1flake.gif",
     "snow_3flake": ASSET_DIR / "snow_3flake.gif",
@@ -86,6 +88,20 @@ def _create_icon_image(path, kind):
         draw.line((70, 94, 64, 112), fill="#4da3ff", width=4)
         draw.line((86, 94, 80, 112), fill="#4da3ff", width=4)
         draw.line((102, 94, 96, 112), fill="#4da3ff", width=4)
+    elif kind == "rain_5drop":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x in (24, 42, 60, 78, 96):
+            draw.line((x, 94, x - 6, 112), fill="#4da3ff", width=4)
+    elif kind == "rain_10drop":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x in (18, 28, 38, 48, 58, 68, 78, 88, 98, 108):
+            draw.line((x, 94, x - 5, 112), fill="#4da3ff", width=3)
     elif kind == "snow":
         draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
         draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")

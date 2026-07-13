@@ -4,6 +4,7 @@ from weather_app import (
     format_forecast_entry,
     get_icon_name_for_code,
     get_rain_intensity_style,
+    get_thunder_rain_description,
     get_wind_direction_arrow,
     get_snow_intensity_style,
     get_weather_description,
@@ -26,13 +27,24 @@ class WeatherAppTests(unittest.TestCase):
 
     def test_hourly_light_rain_maps_to_single_drop_icon(self):
         label, icon = get_rain_intensity_style(0.4, period="hourly")
-        self.assertEqual(label, "Hafif Şiddetli Yağmur")
+        self.assertEqual(label, "Hafif Yağmur")
         self.assertEqual(icon, "rain_1drop")
 
     def test_daily_heavy_rain_maps_to_six_drop_icon(self):
         label, icon = get_rain_intensity_style(16, period="daily")
-        self.assertEqual(label, "Çok Şiddetli Yağmur")
-        self.assertEqual(icon, "rain_6drop")
+        self.assertEqual(label, "Yağmurlu")
+        self.assertEqual(icon, "rain_3drop")
+
+    def test_daily_very_heavy_rain_maps_to_ten_drop_icon(self):
+        label, icon = get_rain_intensity_style(55, period="daily")
+        self.assertEqual(label, "Aşırı Kuvvetli Yağmur")
+        self.assertEqual(icon, "rain_10drop")
+
+    def test_thunder_prefix_for_light_rain_description(self):
+        self.assertEqual(
+            get_thunder_rain_description(2),
+            "Gök Gürültülü Hafif Yağmur",
+        )
 
     def test_hourly_light_snow_maps_to_single_flake_icon(self):
         label, icon = get_snow_intensity_style(0.3, period="hourly")
