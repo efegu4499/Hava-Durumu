@@ -107,6 +107,24 @@
             padding: 18px;
             margin-bottom: 20px;
         }
+        .summary-box {
+            background: #eef7ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+        }
+        .summary-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1d4ed8;
+            margin-bottom: 4px;
+        }
+        .summary-text {
+            font-size: 13px;
+            line-height: 1.4;
+            color: #1e3a8a;
+        }
         .forecast-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -203,6 +221,12 @@
         {% if weather %}
         <div class="weather-card">
             <h2>{{ weather.location_text }}</h2>
+            {% if day_summary %}
+            <div class="summary-box">
+                <div class="summary-title">Günün Özeti</div>
+                <div class="summary-text">{{ day_summary }}</div>
+            </div>
+            {% endif %}
             <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
             <p>Sıcaklık: {{ weather.temperature }} °C</p>
             <p>Nem: {{ weather.humidity }} %</p>
