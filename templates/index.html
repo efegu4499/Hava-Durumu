@@ -53,6 +53,54 @@
             border-radius: 10px;
             cursor: pointer;
         }
+        .favorite-add-btn {
+            background: #0f766e;
+        }
+        .favorites-panel {
+            margin: -8px 0 18px;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+        .favorites-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .favorites-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .favorites-clear {
+            border: none;
+            background: transparent;
+            color: #475569;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 0;
+        }
+        .favorites-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .favorite-chip {
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #0f172a;
+            border-radius: 999px;
+            font-size: 13px;
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+        .favorites-empty {
+            color: #64748b;
+            font-size: 12px;
+        }
         .weather-card {
             background: #f8fbff;
             border-radius: 16px;
@@ -137,7 +185,16 @@
                 <div id="suggestions" class="suggestions"></div>
             </div>
             <button type="submit">Sorgula</button>
+            <button id="add-favorite-btn" class="favorite-add-btn" type="button">Favoriye Ekle</button>
         </form>
+
+        <div class="favorites-panel">
+            <div class="favorites-header">
+                <div class="favorites-title">Favori Şehirlerim</div>
+                <button id="clear-favorites-btn" class="favorites-clear" type="button">Tümünü Temizle</button>
+            </div>
+            <div id="favorites-list" class="favorites-list"></div>
+        </div>
 
         {% if error %}
             <div class="error">{{ error }}</div>
@@ -194,7 +251,70 @@
         const cityInput = document.getElementById("city-input");
         const suggestionsBox = document.getElementById("suggestions");
         const form = document.getElementById("weather-form");
+        const addFavoriteBtn = document.getElementById("add-favorite-btn");
+        const clearFavoritesBtn = document.getElementById("clear-favorites-btn");
+        const favoritesList = document.getElementById("favorites-list");
         let activeRequestId = 0;
+        const FAVORITES_KEY = "gokyra_favorite_cities";
+
+        function readFavorites() {
+            try {
+                const raw = localStorage.getItem(FAVORITES_KEY);
+                const parsed = raw ? JSON.parse(raw) : [];
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (_) {
+                return [];
+            }
+        }
+
+        function writeFavorites(items) {
+            localStorage.setItem(FAVORITES_KEY, JSON.stringify(items));
+        }
+
+        function normalizeCityKey(text) {
+            return (text || "").trim().toLocaleLowerCase("tr-TR");
+        }
+
+        function renderFavorites() {
+            const favorites = readFavorites();
+            favoritesList.innerHTML = "";
+
+            if (!favorites.length) {
+                const empty = document.createElement("div");
+                empty.className = "favorites-empty";
+                empty.textContent = "Henüz favori şehir yok.";
+                favoritesList.appendChild(empty);
+                return;
+            }
+
+            favorites.forEach((cityName) => {
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "favorite-chip";
+                chip.textContent = cityName;
+                chip.addEventListener("click", () => {
+                    window.location.href = `/?city=${encodeURIComponent(cityName)}`;
+                });
+                favoritesList.appendChild(chip);
+            });
+        }
+
+        function addFavoriteCity(cityName) {
+            const cleaned = (cityName || "").trim();
+            if (!cleaned) {
+                return;
+            }
+
+            const favorites = readFavorites();
+            const exists = favorites.some((item) => normalizeCityKey(item) === normalizeCityKey(cleaned));
+            if (exists) {
+                return;
+            }
+
+            favorites.unshift(cleaned);
+            writeFavorites(favorites.slice(0, 10));
+            renderFavorites();
+        }
 
         function hideSuggestions() {
             suggestionsBox.style.display = "none";
@@ -254,6 +374,17 @@
                 hideSuggestions();
             }
         });
+
+        addFavoriteBtn.addEventListener("click", () => {
+            addFavoriteCity(cityInput.value);
+        });
+
+        clearFavoritesBtn.addEventListener("click", () => {
+            writeFavorites([]);
+            renderFavorites();
+        });
+
+        renderFavorites();
     </script>
     <script>
         if ("serviceWorker" in navigator) {
