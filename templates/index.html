@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Gokyra Weather ile Turkiye icin saatlik ve 5 gunluk hava durumu tahmini.">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Gokyra Weather">
@@ -13,69 +13,270 @@
     <link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <title>Gokyra Weather</title>
     <style>
+        :root {
+            --panel-bg: #ffffff;
+            --app-bg: linear-gradient(135deg, #ecf8ff 0%, #d6efff 45%, #fef7e7 100%);
+            --ink: #173047;
+            --accent: #007c91;
+            --line: #d6e4ef;
+            --profile-size: 84px;
+            --control-size: 52px;
+            --shadow-lg: 0 16px 46px rgba(16, 37, 56, 0.22);
+            --shadow-sm: 0 6px 20px rgba(16, 37, 56, 0.14);
+            --radius-xl: 28px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(180deg, #e5e7eb 0%, #f3f4f6 100%);
-            color: #1f2937;
-            transition: background 350ms ease;
+            min-height: 100vh;
+            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+            color: var(--ink);
+            background: var(--app-bg);
+            transition: background 300ms ease;
+            overflow-x: hidden;
         }
+
         body.theme-sunny {
-            background: linear-gradient(180deg, #bfe8ff 0%, #dff4ff 100%);
+            --app-bg: linear-gradient(135deg, #d9f6ff 0%, #fff9dc 100%);
         }
+
         body.theme-rainy {
-            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+            --app-bg: linear-gradient(145deg, #dce8ff 0%, #c6daff 45%, #f2f6ff 100%);
         }
+
         body.theme-snowy {
-            background: linear-gradient(180deg, #4b5563 0%, #6b7280 100%);
+            --app-bg: linear-gradient(145deg, #edf3ff 0%, #f8fbff 100%);
         }
+
         body.theme-cloudy {
-            background: linear-gradient(180deg, #d1d5db 0%, #e5e7eb 100%);
+            --app-bg: linear-gradient(145deg, #eef3f8 0%, #f9fcff 100%);
         }
-        .container {
-            max-width: 920px;
-            margin: 40px auto;
-            padding: 24px;
-            background: rgba(255,255,255,0.97);
+
+        .app-layer {
+            position: relative;
+            min-height: 100vh;
+            padding: 18px 14px 32px;
+        }
+
+        .toolbar {
+            position: fixed;
+            top: clamp(10px, 2.5vh, 24px);
+            left: clamp(10px, 4.8vw, 56px);
+            z-index: 35;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .profile-avatar {
+            width: var(--profile-size);
+            height: var(--profile-size);
+            border-radius: 50%;
+            border: 4px solid #ffffff;
+            box-shadow: var(--shadow-sm);
+            background: radial-gradient(circle at 30% 22%, #ffffff 0%, #d4eeff 50%, #9dd5f3 100%);
+            display: grid;
+            place-items: center;
+            font-size: 38px;
+            user-select: none;
+        }
+
+        .circle-btn {
+            width: var(--control-size);
+            height: var(--control-size);
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            background: #0e7f90;
+            color: #ffffff;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: transform 160ms ease, background 160ms ease;
+        }
+
+        .circle-btn:hover {
+            transform: translateY(-2px);
+            background: #095968;
+        }
+
+        .hamburger-lines {
+            width: 20px;
+            height: 14px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hamburger-lines span {
+            display: block;
+            height: 3px;
+            border-radius: 4px;
+            background: #ffffff;
+        }
+
+        .gear-symbol {
+            font-size: 22px;
+            line-height: 1;
+        }
+
+        .mini-drawer {
+            position: fixed;
+            top: 110px;
+            width: 92px;
+            height: calc(100vh - 190px);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #d4e2ec;
             border-radius: 20px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+            box-shadow: var(--shadow-sm);
+            z-index: 24;
+            padding: 12px 8px 68px;
+            overflow-y: auto;
+            transition: transform 230ms ease;
         }
-        h1 { margin-top: 0; }
+
+        .mini-drawer.left {
+            left: 10px;
+            transform: translateX(-122%);
+        }
+
+        .mini-drawer.right {
+            right: 10px;
+            transform: translateX(122%);
+        }
+
+        .mini-drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-title {
+            font-size: 11px;
+            text-align: center;
+            margin: 2px 0 10px;
+            color: #426782;
+            font-weight: 700;
+        }
+
+        .drawer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .drawer-item {
+            width: 100%;
+            border: 1px solid #d6e4ef;
+            background: #f8fcff;
+            color: #2a4d68;
+            border-radius: 12px;
+            padding: 9px 4px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .drawer-anchor-gap {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #89a7bd;
+            font-size: 10px;
+        }
+
+        .content-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: 22px;
+        }
+
+        .menu-panel {
+            width: min(94vw, 1040px);
+            background: var(--panel-bg);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-lg);
+            padding: 26px;
+            animation: rise-in 320ms ease;
+        }
+
+        @keyframes rise-in {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        h1 {
+            margin: 0 0 16px;
+            font-size: clamp(1.4rem, 2.2vw, 2.1rem);
+            color: #1f3f59;
+        }
+
         form {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
+
         .search-wrap {
             position: relative;
             width: 280px;
+            max-width: 100%;
         }
-        input[type="text"] {
-            padding: 12px 14px;
-            width: 280px;
-            border: 1px solid #cbd5e1;
-            border-radius: 10px;
-            box-sizing: border-box;
-        }
-        button {
-            padding: 12px 16px;
-            border: none;
-            background: #2563eb;
-            color: white;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-        .favorite-add-btn {
-            background: #0f766e;
-        }
-        .favorites-panel {
-            margin: -8px 0 18px;
-            padding: 10px 12px;
-            border: 1px solid #d1d5db;
+
+        input[type="text"],
+        input[type="color"],
+        input[type="file"],
+        select {
+            padding: 11px 12px;
+            width: 100%;
+            border: 1px solid #bed1de;
             border-radius: 12px;
-            background: #f8fafc;
+            background: #ffffff;
+            color: #153952;
         }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 11px 14px;
+            border: 0;
+            border-radius: 12px;
+            background: #0d8c9f;
+            color: #ffffff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .favorite-add-btn {
+            background: #1a6a52;
+        }
+
+        .favorites-panel {
+            margin: -4px 0 18px;
+            padding: 12px;
+            border: 1px solid #d6e4ef;
+            border-radius: 14px;
+            background: #f8fcff;
+        }
+
         .favorites-header {
             display: flex;
             align-items: center;
@@ -83,11 +284,13 @@
             gap: 8px;
             margin-bottom: 8px;
         }
+
         .favorites-title {
             font-size: 14px;
             font-weight: 700;
             color: #0f172a;
         }
+
         .favorites-clear {
             border: none;
             background: transparent;
@@ -96,11 +299,13 @@
             font-size: 12px;
             padding: 0;
         }
+
         .favorites-list {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
         }
+
         .favorite-chip {
             border: 1px solid #cbd5e1;
             background: #ffffff;
@@ -110,48 +315,58 @@
             padding: 6px 10px;
             cursor: pointer;
         }
+
         .favorites-empty {
             color: #64748b;
             font-size: 12px;
         }
+
         .weather-card {
-            background: #f8fbff;
+            background: #f7fbff;
             border-radius: 16px;
+            border: 1px solid #d4e4f0;
             padding: 18px;
             margin-bottom: 20px;
         }
+
         .summary-box {
-            background: #eef7ff;
-            border: 1px solid #bfdbfe;
+            background: #ecf7ff;
+            border: 1px solid #c4deef;
             border-radius: 12px;
             padding: 10px 12px;
             margin-bottom: 14px;
         }
+
         .summary-title {
             font-size: 13px;
             font-weight: 700;
-            color: #1d4ed8;
+            color: #1d4e74;
             margin-bottom: 4px;
         }
+
         .summary-text {
             font-size: 13px;
             line-height: 1.4;
-            color: #1e3a8a;
+            color: #24557a;
         }
+
         .forecast-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 12px;
         }
+
         .forecast-item {
-            background: #1a3a2a;
+            background: #164863;
             border-radius: 12px;
             padding: 12px;
             color: #ffffff;
         }
+
         .forecast-item strong {
-            color: #6ee7b7;
+            color: #8fe3ff;
         }
+
         .hourly-scroll {
             display: flex;
             gap: 10px;
@@ -159,9 +374,10 @@
             padding-bottom: 8px;
             scrollbar-width: thin;
         }
+
         .hourly-item {
             flex: 0 0 auto;
-            background: #1e293b;
+            background: #1f3a56;
             border-radius: 12px;
             padding: 10px 12px;
             text-align: center;
@@ -169,14 +385,17 @@
             font-size: 13px;
             color: #ffffff;
         }
-        .hourly-item .h-time { font-weight: bold; color: #94a3b8; font-size: 12px; }
+
+        .hourly-item .h-time { font-weight: bold; color: #9ac4e6; font-size: 12px; }
         .hourly-item .h-temp { font-size: 16px; font-weight: bold; color: #ffffff; margin: 4px 0; }
-        .hourly-item .h-precip { font-size: 11px; color: #7dd3fc; }
-        .hourly-item .h-desc { font-size: 11px; color: #d1d5db; margin-top: 3px; }
+        .hourly-item .h-precip { font-size: 11px; color: #8dd9ff; }
+        .hourly-item .h-desc { font-size: 11px; color: #d6e4ef; margin-top: 3px; }
+
         .error {
             color: #b91c1c;
             font-weight: bold;
         }
+
         .suggestions {
             position: absolute;
             top: calc(100% + 6px);
@@ -185,12 +404,13 @@
             background: #ffffff;
             border: 1px solid #cbd5e1;
             border-radius: 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
             max-height: 220px;
             overflow-y: auto;
-            z-index: 20;
+            z-index: 30;
             display: none;
         }
+
         .suggestion-item {
             width: 100%;
             border: none;
@@ -201,87 +421,324 @@
             font-size: 14px;
             color: #0f172a;
         }
+
         .suggestion-item:hover {
             background: #eef6ff;
+        }
+
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(7, 25, 40, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 55;
+            padding: 20px;
+        }
+
+        .settings-overlay.open {
+            display: flex;
+        }
+
+        .settings-dialog {
+            position: relative;
+            width: min(88vw, 980px);
+            height: min(78vh, 640px);
+            background: #ffffff;
+            border: 1px solid #d7e5ef;
+            border-radius: 26px;
+            box-shadow: var(--shadow-lg);
+            padding: 56px 20px 20px;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .settings-close {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 0;
+            background: #e23636;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+        }
+
+        .settings-col {
+            border: 1px solid #e0ebf2;
+            border-radius: 16px;
+            padding: 14px;
+            overflow: auto;
+            background: #fbfeff;
+        }
+
+        .settings-title {
+            margin: 0 0 12px;
+            font-size: 18px;
+            color: #1d4f73;
+        }
+
+        .settings-block {
+            margin-bottom: 14px;
+        }
+
+        .settings-label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            color: #335a78;
+            font-weight: 600;
+        }
+
+        .settings-hint {
+            color: #547690;
+            font-size: 12px;
+            margin: 6px 0 0;
+        }
+
+        .settings-inline {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .draw-canvas {
+            width: 100%;
+            height: 210px;
+            border: 1px dashed #8eb4ce;
+            border-radius: 14px;
+            background: #ffffff;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        @media (max-width: 860px) {
+            .menu-panel {
+                padding: 18px;
+            }
+
+            .toolbar {
+                left: 12px;
+                top: 12px;
+            }
+
+            .settings-dialog {
+                grid-template-columns: 1fr;
+                width: min(92vw, 560px);
+                height: min(84vh, 760px);
+            }
+        }
+
+        @media (max-width: 760px) and (orientation: portrait) {
+            .menu-panel {
+                width: min(94vw, 420px);
+                min-height: 74vh;
+                border-radius: 22px;
+            }
+
+            .mini-drawer {
+                width: 82px;
+                height: calc(100vh - 168px);
+            }
+
+            .settings-dialog {
+                width: min(90vw, 420px);
+                height: min(82vh, 720px);
+            }
+        }
+
+        @media (max-width: 960px) and (orientation: landscape) {
+            .menu-panel {
+                width: min(94vw, 960px);
+                min-height: 66vh;
+            }
+
+            .settings-dialog {
+                width: min(92vw, 940px);
+                height: min(72vh, 460px);
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
 <body class="theme-{{ weather_theme|default('cloudy') }}">
-    <div class="container">
-        <h1>Gokyra Weather</h1>
+    <div class="app-layer">
+        <div class="toolbar">
+            <div class="profile-avatar" title="Karakter Profili">🙂</div>
 
-        <form id="weather-form" method="post" autocomplete="off">
-            <div class="search-wrap">
-                <input id="city-input" type="text" name="city" value="{{ city }}" placeholder="İlçe veya il adı girin">
-                <div id="suggestions" class="suggestions"></div>
-            </div>
-            <button type="submit">Sorgula</button>
-            <button id="add-favorite-btn" class="favorite-add-btn" type="button">Favoriye Ekle</button>
-        </form>
+            <button id="menu-toggle-btn" class="circle-btn" type="button" title="Kucuk menu">
+                <span class="hamburger-lines" aria-hidden="true">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </span>
+            </button>
 
-        <div class="favorites-panel">
-            <div class="favorites-header">
-                <div class="favorites-title">Favori Şehirlerim</div>
-                <button id="clear-favorites-btn" class="favorites-clear" type="button">Tümünü Temizle</button>
-            </div>
-            <div id="favorites-list" class="favorites-list"></div>
+            <button id="settings-toggle-btn" class="circle-btn" type="button" title="Ayarlar">
+                <span class="gear-symbol" aria-hidden="true">⚙</span>
+            </button>
         </div>
 
-        {% if error %}
-            <div class="error">{{ error }}</div>
-        {% endif %}
+        <aside id="left-drawer" class="mini-drawer left" aria-label="Sol mini menu">
+            <div class="drawer-title">Sol Menu</div>
+            <div id="left-drawer-list" class="drawer-list"></div>
+            <div class="drawer-anchor-gap">Bosluk</div>
+        </aside>
 
-        {% if weather %}
-        <div class="weather-card">
-            <h2>{{ weather.location_text }}</h2>
-            {% if day_summary %}
-            <div class="summary-box">
-                <div class="summary-title">Günün Özeti</div>
-                <div class="summary-text">{{ day_summary }}</div>
-            </div>
-            {% endif %}
-            <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
-            <p>Sıcaklık: {{ weather.temperature }} °C</p>
-            <p>Nem: {{ weather.humidity }} %</p>
-            <p>Rüzgar: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>
-            <p>Durum: {{ weather.description }}</p>
-        </div>
-        {% endif %}
+        <aside id="right-drawer" class="mini-drawer right" aria-label="Sag mini menu">
+            <div class="drawer-title">Sag Menu</div>
+            <div id="right-drawer-list" class="drawer-list"></div>
+            <div class="drawer-anchor-gap">Bosluk</div>
+        </aside>
 
-        {% if hourly %}
-        <div>
-            <h3>Saatlik Tahmin (24 Saat)</h3>
-            <div class="hourly-scroll">
-                {% for item in hourly %}
-                <div class="hourly-item">
-                    <div class="h-time">{{ item.time }}</div>
-                    <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" width="32" height="32"><br>
-                    <div class="h-temp">{{ item.temperature }}°</div>
-                    {% if item.precipitation_probability is not none %}
-                    <div class="h-precip">💧{{ item.precipitation_probability }}%{% if item.precipitation_mm is not none %} | {{ item.precipitation_mm }} mm{% endif %}{% if item.snowfall_cm is not none and item.snowfall_cm > 0 %} | ❄ {{ item.snowfall_cm }} cm{% endif %}</div>
+        <div class="content-wrap">
+            <div class="menu-panel">
+                <h1>Gokyra Weather</h1>
+
+                <form id="weather-form" method="post" autocomplete="off">
+                    <div class="search-wrap">
+                        <input id="city-input" type="text" name="city" value="{{ city }}" placeholder="Ilce veya il adi girin">
+                        <div id="suggestions" class="suggestions"></div>
+                    </div>
+                    <div class="button-row">
+                        <button type="submit">Sorgula</button>
+                        <button id="add-favorite-btn" class="favorite-add-btn" type="button">Favoriye Ekle</button>
+                    </div>
+                </form>
+
+                <div class="favorites-panel">
+                    <div class="favorites-header">
+                        <div class="favorites-title">Favori Sehirlerim</div>
+                        <button id="clear-favorites-btn" class="favorites-clear" type="button">Tumunu Temizle</button>
+                    </div>
+                    <div id="favorites-list" class="favorites-list"></div>
+                </div>
+
+                {% if error %}
+                    <div class="error">{{ error }}</div>
+                {% endif %}
+
+                {% if weather %}
+                <div class="weather-card">
+                    <h2>{{ weather.location_text }}</h2>
+                    {% if day_summary %}
+                    <div class="summary-box">
+                        <div class="summary-title">Gunun Ozeti</div>
+                        <div class="summary-text">{{ day_summary }}</div>
+                    </div>
                     {% endif %}
-                    <div class="h-desc">{{ item.description }}</div>
+                    <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
+                    <p>Sicaklik: {{ weather.temperature }} C</p>
+                    {% if weather.felt_temperature is not none %}
+                    <p>Hissedilen: {{ weather.felt_temperature }} C</p>
+                    {% endif %}
+                    <p>Nem: {{ weather.humidity }} %</p>
+                    <p>Ruzgar: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>
+                    <p>Durum: {{ weather.description }}</p>
                 </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+                {% endif %}
 
-        {% if forecast %}
-        <div>
-            <h3>5 Günlük Tahmin</h3>
-            <div class="forecast-grid">
-                {% for item in forecast %}
-                <div class="forecast-item">
-                    <strong>{{ item.day_name }}</strong><br>
-                    <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
-                    {{ item.max_temp }}°C / {{ item.min_temp }}°C<br>
-                    {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yağış: {{ item.precipitation_sum_mm }} mm{% endif %}{% if item.snowfall_sum_cm is not none and item.snowfall_sum_cm > 0 %}<br>Kar: {{ item.snowfall_sum_cm }} cm{% endif %}
+                {% if hourly %}
+                <div>
+                    <h3>Saatlik Tahmin (24 Saat)</h3>
+                    <div class="hourly-scroll">
+                        {% for item in hourly %}
+                        <div class="hourly-item">
+                            <div class="h-time">{{ item.time }}</div>
+                            <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" width="32" height="32" alt="hourly icon"><br>
+                            <div class="h-temp">{{ item.temperature }}°</div>
+                            {% if item.precipitation_probability is not none %}
+                            <div class="h-precip">{{ item.precipitation_probability }}%{% if item.precipitation_mm is not none %} | {{ item.precipitation_mm }} mm{% endif %}{% if item.snowfall_cm is not none and item.snowfall_cm > 0 %} | {{ item.snowfall_cm }} cm{% endif %}</div>
+                            {% endif %}
+                            <div class="h-desc">{{ item.description }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
-                {% endfor %}
+                {% endif %}
+
+                {% if forecast %}
+                <div>
+                    <h3>5 Gunluk Tahmin</h3>
+                    <div class="forecast-grid">
+                        {% for item in forecast %}
+                        <div class="forecast-item">
+                            <strong>{{ item.day_name }}</strong><br>
+                            <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
+                            {{ item.max_temp }}C / {{ item.min_temp }}C<br>
+                            {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yagis: {{ item.precipitation_sum_mm }} mm{% endif %}{% if item.snowfall_sum_cm is not none and item.snowfall_sum_cm > 0 %}<br>Kar: {{ item.snowfall_sum_cm }} cm{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
-        {% endif %}
+    </div>
+
+    <div id="settings-overlay" class="settings-overlay" aria-hidden="true">
+        <div class="settings-dialog" role="dialog" aria-modal="true" aria-label="Ayarlar menusu">
+            <button id="settings-close-btn" class="settings-close" type="button" aria-label="Kapat">x</button>
+
+            <section class="settings-col">
+                <h2 class="settings-title">Ayarlar</h2>
+
+                <div class="settings-block">
+                    <label class="settings-label" for="preset-select">Arka plan stili</label>
+                    <select id="preset-select">
+                        <option value="default">Varsayilan</option>
+                        <option value="white">Beyaz</option>
+                        <option value="sky">Gokyuzu</option>
+                        <option value="mint">Mint</option>
+                    </select>
+                    <p class="settings-hint">Bu ayar cihaz bazli kaydedilir.</p>
+                </div>
+
+                <div class="settings-block">
+                    <label class="settings-label" for="bg-color">Arka plan rengi</label>
+                    <input id="bg-color" type="color" value="#f6fbff">
+                </div>
+
+                <div class="settings-block">
+                    <label class="settings-label" for="bg-upload">Ozel arka plan fotografi</label>
+                    <input id="bg-upload" type="file" accept="image/*">
+                    <p class="settings-hint">Yuklenen fotograf bu cihazda saklanir.</p>
+                </div>
+
+                <div class="settings-block">
+                    <label class="settings-label" for="menu-side-select">Kucuk menuye tus ekle</label>
+                    <div class="settings-inline">
+                        <input id="drawer-item-label" type="text" placeholder="Tus adi">
+                        <select id="menu-side-select">
+                            <option value="left">Sol</option>
+                            <option value="right">Sag</option>
+                        </select>
+                        <button id="add-drawer-item-btn" type="button">Ekle</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-col">
+                <h2 class="settings-title">Cizim Alani</h2>
+                <div class="settings-block">
+                    <label class="settings-label">Kendi arka planini ciz</label>
+                    <canvas id="draw-canvas" class="draw-canvas" width="680" height="420"></canvas>
+                </div>
+                <div class="settings-inline">
+                    <button id="draw-save-btn" type="button">Cizimi Arka Plan Yap</button>
+                    <button id="draw-clear-btn" type="button">Temizle</button>
+                </div>
+            </section>
+        </div>
     </div>
 
     <script>
@@ -291,21 +748,57 @@
         const addFavoriteBtn = document.getElementById("add-favorite-btn");
         const clearFavoritesBtn = document.getElementById("clear-favorites-btn");
         const favoritesList = document.getElementById("favorites-list");
-        let activeRequestId = 0;
-        const FAVORITES_KEY = "gokyra_favorite_cities";
 
-        function readFavorites() {
+        const menuToggleBtn = document.getElementById("menu-toggle-btn");
+        const leftDrawer = document.getElementById("left-drawer");
+        const rightDrawer = document.getElementById("right-drawer");
+        const leftDrawerList = document.getElementById("left-drawer-list");
+        const rightDrawerList = document.getElementById("right-drawer-list");
+
+        const settingsToggleBtn = document.getElementById("settings-toggle-btn");
+        const settingsOverlay = document.getElementById("settings-overlay");
+        const settingsCloseBtn = document.getElementById("settings-close-btn");
+        const presetSelect = document.getElementById("preset-select");
+        const bgColorInput = document.getElementById("bg-color");
+        const bgUpload = document.getElementById("bg-upload");
+        const menuSideSelect = document.getElementById("menu-side-select");
+        const drawerItemLabel = document.getElementById("drawer-item-label");
+        const addDrawerItemBtn = document.getElementById("add-drawer-item-btn");
+
+        const drawCanvas = document.getElementById("draw-canvas");
+        const drawSaveBtn = document.getElementById("draw-save-btn");
+        const drawClearBtn = document.getElementById("draw-clear-btn");
+
+        const FAVORITES_KEY = "gokyra_favorite_cities";
+        const UI_PREFS_KEY = "gokyra_ui_prefs";
+        const DRAWER_ITEMS_KEY = "gokyra_drawer_items";
+
+        let activeRequestId = 0;
+
+        function readJSON(key, fallback) {
             try {
-                const raw = localStorage.getItem(FAVORITES_KEY);
-                const parsed = raw ? JSON.parse(raw) : [];
-                return Array.isArray(parsed) ? parsed : [];
+                const value = localStorage.getItem(key);
+                if (!value) {
+                    return fallback;
+                }
+                const parsed = JSON.parse(value);
+                return parsed ?? fallback;
             } catch (_) {
-                return [];
+                return fallback;
             }
         }
 
+        function writeJSON(key, value) {
+            localStorage.setItem(key, JSON.stringify(value));
+        }
+
+        function readFavorites() {
+            const parsed = readJSON(FAVORITES_KEY, []);
+            return Array.isArray(parsed) ? parsed : [];
+        }
+
         function writeFavorites(items) {
-            localStorage.setItem(FAVORITES_KEY, JSON.stringify(items));
+            writeJSON(FAVORITES_KEY, items);
         }
 
         function normalizeCityKey(text) {
@@ -319,7 +812,7 @@
             if (!favorites.length) {
                 const empty = document.createElement("div");
                 empty.className = "favorites-empty";
-                empty.textContent = "Henüz favori şehir yok.";
+                empty.textContent = "Henuz favori sehir yok.";
                 favoritesList.appendChild(empty);
                 return;
             }
@@ -397,6 +890,239 @@
             }
         }
 
+        function readPrefs() {
+            const defaultPrefs = {
+                preset: "default",
+                solidColor: "#f6fbff",
+                customImage: "",
+                drawImage: "",
+            };
+            return Object.assign(defaultPrefs, readJSON(UI_PREFS_KEY, {}));
+        }
+
+        function writePrefs(next) {
+            writeJSON(UI_PREFS_KEY, next);
+        }
+
+        function resolvePresetBackground(name) {
+            if (name === "white") {
+                return "#ffffff";
+            }
+            if (name === "sky") {
+                return "linear-gradient(135deg, #d7f2ff 0%, #effbff 100%)";
+            }
+            if (name === "mint") {
+                return "linear-gradient(135deg, #e0fff5 0%, #f8fff7 100%)";
+            }
+            return getComputedStyle(document.documentElement).getPropertyValue("--app-bg");
+        }
+
+        function applyBackgroundFromPrefs() {
+            const prefs = readPrefs();
+            document.body.style.background = "";
+
+            if (prefs.customImage) {
+                document.body.style.background = `url(${prefs.customImage}) center / cover fixed no-repeat`;
+                return;
+            }
+
+            if (prefs.drawImage) {
+                document.body.style.background = `url(${prefs.drawImage}) center / cover fixed no-repeat`;
+                return;
+            }
+
+            const presetBg = resolvePresetBackground(prefs.preset);
+            if (prefs.preset !== "default") {
+                document.body.style.background = presetBg;
+            }
+
+            if (prefs.solidColor) {
+                document.body.style.background = prefs.solidColor;
+            }
+        }
+
+        function readDrawerItems() {
+            const fallback = {
+                left: ["Profil", "Harita", "Oyun"],
+                right: ["Not", "Takvim", "Tema"],
+            };
+            const data = readJSON(DRAWER_ITEMS_KEY, fallback);
+            return {
+                left: Array.isArray(data.left) ? data.left.slice(0, 16) : fallback.left,
+                right: Array.isArray(data.right) ? data.right.slice(0, 16) : fallback.right,
+            };
+        }
+
+        function writeDrawerItems(items) {
+            writeJSON(DRAWER_ITEMS_KEY, items);
+        }
+
+        function renderDrawerItems() {
+            const items = readDrawerItems();
+
+            leftDrawerList.innerHTML = "";
+            rightDrawerList.innerHTML = "";
+
+            items.left.forEach((text) => {
+                const btn = document.createElement("button");
+                btn.className = "drawer-item";
+                btn.type = "button";
+                btn.textContent = text;
+                leftDrawerList.appendChild(btn);
+            });
+
+            items.right.forEach((text) => {
+                const btn = document.createElement("button");
+                btn.className = "drawer-item";
+                btn.type = "button";
+                btn.textContent = text;
+                rightDrawerList.appendChild(btn);
+            });
+        }
+
+        function addDrawerItem() {
+            const label = (drawerItemLabel.value || "").trim();
+            if (!label) {
+                return;
+            }
+
+            const side = menuSideSelect.value === "right" ? "right" : "left";
+            const items = readDrawerItems();
+            items[side].push(label);
+            items[side] = items[side].slice(-16);
+            writeDrawerItems(items);
+            renderDrawerItems();
+            drawerItemLabel.value = "";
+        }
+
+        menuToggleBtn.addEventListener("click", () => {
+            leftDrawer.classList.toggle("open");
+            rightDrawer.classList.toggle("open");
+        });
+
+        settingsToggleBtn.addEventListener("click", () => {
+            settingsOverlay.classList.add("open");
+            settingsOverlay.setAttribute("aria-hidden", "false");
+        });
+
+        function closeSettings() {
+            settingsOverlay.classList.remove("open");
+            settingsOverlay.setAttribute("aria-hidden", "true");
+        }
+
+        settingsCloseBtn.addEventListener("click", closeSettings);
+        settingsOverlay.addEventListener("click", (event) => {
+            if (event.target === settingsOverlay) {
+                closeSettings();
+            }
+        });
+
+        presetSelect.addEventListener("change", () => {
+            const prefs = readPrefs();
+            prefs.preset = presetSelect.value;
+            writePrefs(prefs);
+            applyBackgroundFromPrefs();
+        });
+
+        bgColorInput.addEventListener("input", () => {
+            const prefs = readPrefs();
+            prefs.solidColor = bgColorInput.value;
+            prefs.customImage = "";
+            prefs.drawImage = "";
+            writePrefs(prefs);
+            applyBackgroundFromPrefs();
+        });
+
+        bgUpload.addEventListener("change", () => {
+            const file = bgUpload.files && bgUpload.files[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = () => {
+                const prefs = readPrefs();
+                prefs.customImage = reader.result;
+                prefs.drawImage = "";
+                writePrefs(prefs);
+                applyBackgroundFromPrefs();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        addDrawerItemBtn.addEventListener("click", addDrawerItem);
+
+        const canvasCtx = drawCanvas.getContext("2d");
+        canvasCtx.fillStyle = "#ffffff";
+        canvasCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+        canvasCtx.strokeStyle = "#0e7f90";
+        canvasCtx.lineWidth = 3;
+        canvasCtx.lineCap = "round";
+
+        let drawing = false;
+
+        function getPoint(event) {
+            const rect = drawCanvas.getBoundingClientRect();
+            const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+            return {
+                x: ((clientX - rect.left) * drawCanvas.width) / rect.width,
+                y: ((clientY - rect.top) * drawCanvas.height) / rect.height,
+            };
+        }
+
+        function startDraw(event) {
+            drawing = true;
+            const point = getPoint(event);
+            canvasCtx.beginPath();
+            canvasCtx.moveTo(point.x, point.y);
+        }
+
+        function drawMove(event) {
+            if (!drawing) {
+                return;
+            }
+            const point = getPoint(event);
+            canvasCtx.lineTo(point.x, point.y);
+            canvasCtx.stroke();
+        }
+
+        function stopDraw() {
+            drawing = false;
+            canvasCtx.closePath();
+        }
+
+        drawCanvas.addEventListener("mousedown", startDraw);
+        drawCanvas.addEventListener("mousemove", drawMove);
+        drawCanvas.addEventListener("mouseup", stopDraw);
+        drawCanvas.addEventListener("mouseleave", stopDraw);
+
+        drawCanvas.addEventListener("touchstart", (event) => {
+            event.preventDefault();
+            startDraw(event);
+        }, { passive: false });
+
+        drawCanvas.addEventListener("touchmove", (event) => {
+            event.preventDefault();
+            drawMove(event);
+        }, { passive: false });
+
+        drawCanvas.addEventListener("touchend", stopDraw);
+
+        drawClearBtn.addEventListener("click", () => {
+            canvasCtx.fillStyle = "#ffffff";
+            canvasCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+            canvasCtx.strokeStyle = "#0e7f90";
+        });
+
+        drawSaveBtn.addEventListener("click", () => {
+            const dataUrl = drawCanvas.toDataURL("image/png");
+            const prefs = readPrefs();
+            prefs.drawImage = dataUrl;
+            prefs.customImage = "";
+            writePrefs(prefs);
+            applyBackgroundFromPrefs();
+        });
+
         cityInput.addEventListener("input", (event) => {
             const queryText = event.target.value.trim();
             if (queryText.length < 2) {
@@ -421,7 +1147,16 @@
             renderFavorites();
         });
 
+        function syncSettingsInputs() {
+            const prefs = readPrefs();
+            presetSelect.value = prefs.preset;
+            bgColorInput.value = prefs.solidColor;
+        }
+
         renderFavorites();
+        renderDrawerItems();
+        syncSettingsInputs();
+        applyBackgroundFromPrefs();
     </script>
     <script>
         if ("serviceWorker" in navigator) {

@@ -32,9 +32,13 @@ def build_daily_summary(weather, forecast, hourly):
 
     parts = []
     temp = weather.get("temperature")
+    felt_temp = weather.get("felt_temperature")
     desc = weather.get("description")
     if temp is not None and desc:
-        parts.append(f"Şu an {temp}°C ve {desc.lower()}.")
+        if felt_temp is not None:
+            parts.append(f"Su an {temp}°C, hissedilen {felt_temp}°C ve {desc.lower()}.")
+        else:
+            parts.append(f"Su an {temp}°C ve {desc.lower()}.")
 
     current_temp = weather.get("temperature")
     today_min_temp = None

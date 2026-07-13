@@ -297,7 +297,11 @@ class WeatherWindow:
             code = weather["weather_code"]
             icon_name = get_icon_name_for_code(code)
             self.location_var.set(f"{weather['city']}, {weather['country']}")
-            self.temp_var.set(f"{weather['temperature']} °C")
+            felt_temp = weather.get("felt_temperature")
+            if felt_temp is not None:
+                self.temp_var.set(f"{weather['temperature']} °C (Hissedilen {felt_temp} °C)")
+            else:
+                self.temp_var.set(f"{weather['temperature']} °C")
             self.status_var.set(get_weather_description(code))
             self.humidity_var.set(f"{weather['humidity']} %")
             arrow = weather.get("wind_direction_arrow") or ""

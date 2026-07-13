@@ -398,7 +398,7 @@ def get_current_weather(city_name):
     weather_url = (
         "https://api.open-meteo.com/v1/forecast?"
         f"latitude={city['latitude']}&longitude={city['longitude']}"
-        "&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m"
+        "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m"
         "&timezone=auto&language=tr"
         "&models=ecmwf_ifs025"
     )
@@ -411,6 +411,7 @@ def get_current_weather(city_name):
         "admin2": city.get("admin2"),
         "country": city["country"],
         "temperature": current.get("temperature_2m"),
+        "felt_temperature": current.get("apparent_temperature"),
         "humidity": current.get("relative_humidity_2m"),
         "wind_speed": current.get("wind_speed_10m"),
         "wind_direction": current.get("wind_direction_10m"),
