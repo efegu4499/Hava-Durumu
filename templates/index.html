@@ -265,6 +265,35 @@
             font-weight: 600;
         }
 
+        .search-loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 4px;
+            color: #2d5a78;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .search-loading.hidden {
+            display: none;
+        }
+
+        .spinner-ring {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid #b8d8ec;
+            border-top-color: #0d8c9f;
+            animation: spin-ring 0.9s linear infinite;
+        }
+
+        @keyframes spin-ring {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .favorite-add-btn {
             background: #1a6a52;
         }
@@ -617,8 +646,12 @@
                         <div id="suggestions" class="suggestions"></div>
                     </div>
                     <div class="button-row">
-                        <button type="submit">Sorgula</button>
+                        <button id="search-submit-btn" type="submit">Sorgula</button>
                         <button id="add-favorite-btn" class="favorite-add-btn" type="button">Favoriye Ekle</button>
+                        <div id="search-loading" class="search-loading hidden" aria-live="polite">
+                            <span class="spinner-ring" aria-hidden="true"></span>
+                            <span>Araniyor...</span>
+                        </div>
                     </div>
                 </form>
 
@@ -752,6 +785,8 @@
         const cityInput = document.getElementById("city-input");
         const suggestionsBox = document.getElementById("suggestions");
         const form = document.getElementById("weather-form");
+        const searchSubmitBtn = document.getElementById("search-submit-btn");
+        const searchLoading = document.getElementById("search-loading");
         const addFavoriteBtn = document.getElementById("add-favorite-btn");
         const clearFavoritesBtn = document.getElementById("clear-favorites-btn");
         const favoritesList = document.getElementById("favorites-list");
@@ -851,6 +886,19 @@
             favorites.unshift(cleaned);
             writeFavorites(favorites.slice(0, 10));
             renderFavorites();
+        }
+
+        function setSearchLoading(active) {
+            if (active) {
+                searchLoading.classList.remove("hidden");
+                searchSubmitBtn.disabled = true;
+                searchSubmitBtn.textContent = "Araniyor";
+                return;
+            }
+
+            searchLoading.classList.add("hidden");
+            searchSubmitBtn.disabled = false;
+            searchSubmitBtn.textContent = "Sorgula";
         }
 
         function hideSuggestions() {
@@ -1147,6 +1195,10 @@
 
         addFavoriteBtn.addEventListener("click", () => {
             addFavoriteCity(cityInput.value);
+        });
+
+        form.addEventListener("submit", () => {
+            setSearchLoading(true);
         });
 
         clearFavoritesBtn.addEventListener("click", () => {
