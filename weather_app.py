@@ -148,18 +148,13 @@ def get_snow_intensity_style(cm_amount, period="hourly"):
     if cm <= 0:
         return None, None
 
-    if period == "daily":
-        if cm < 2:
-            return "Hafif Şiddetli Kar", "snow_1flake"
-        if cm < 10:
-            return "Şiddetli Kar", "snow_3flake"
-        return "Çok Şiddetli Kar", "snow_6flake"
-
-    if cm < 0.5:
-        return "Hafif Şiddetli Kar", "snow_1flake"
-    if cm < 2:
-        return "Şiddetli Kar", "snow_3flake"
-    return "Çok Şiddetli Kar", "snow_6flake"
+    if cm < 5:
+        return "Hafif Karlı", "snow_1flake"
+    if cm < 20:
+        return "Karlı", "snow_3flake"
+    if cm < 50:
+        return "Kuvvetli Kar", "snow_5flake"
+    return "Yoğun Kar", "snow_10flake"
 
 
 def _get_day_name(date_text):

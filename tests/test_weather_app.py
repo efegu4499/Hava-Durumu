@@ -48,13 +48,23 @@ class WeatherAppTests(unittest.TestCase):
 
     def test_hourly_light_snow_maps_to_single_flake_icon(self):
         label, icon = get_snow_intensity_style(0.3, period="hourly")
-        self.assertEqual(label, "Hafif Şiddetli Kar")
+        self.assertEqual(label, "Hafif Karlı")
         self.assertEqual(icon, "snow_1flake")
 
     def test_daily_heavy_snow_maps_to_six_flake_icon(self):
         label, icon = get_snow_intensity_style(12, period="daily")
-        self.assertEqual(label, "Çok Şiddetli Kar")
-        self.assertEqual(icon, "snow_6flake")
+        self.assertEqual(label, "Karlı")
+        self.assertEqual(icon, "snow_3flake")
+
+    def test_daily_midrange_snow_maps_to_five_flake_icon(self):
+        label, icon = get_snow_intensity_style(30, period="daily")
+        self.assertEqual(label, "Kuvvetli Kar")
+        self.assertEqual(icon, "snow_5flake")
+
+    def test_daily_intense_snow_maps_to_ten_flake_icon(self):
+        label, icon = get_snow_intensity_style(55, period="daily")
+        self.assertEqual(label, "Yoğun Kar")
+        self.assertEqual(icon, "snow_10flake")
 
     def test_wind_direction_arrow_maps_northeast(self):
         self.assertEqual(get_wind_direction_arrow(45), "↗")

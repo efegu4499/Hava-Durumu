@@ -29,7 +29,9 @@ WEATHER_ICON_FILES = {
     "snow": ASSET_DIR / "snow.gif",
     "snow_1flake": ASSET_DIR / "snow_1flake.gif",
     "snow_3flake": ASSET_DIR / "snow_3flake.gif",
+    "snow_5flake": ASSET_DIR / "snow_5flake.gif",
     "snow_6flake": ASSET_DIR / "snow_6flake.gif",
+    "snow_10flake": ASSET_DIR / "snow_10flake.gif",
     "sleet": ASSET_DIR / "sleet.gif",
     "storm": ASSET_DIR / "storm.gif",
     "storm_rain": ASSET_DIR / "storm_rain.gif",
@@ -142,6 +144,26 @@ def _create_icon_image(path, kind):
             draw.line((x - 4, y + 6, x + 4, y + 6), fill="#ffffff", width=2)
             draw.line((x - 3, y + 2, x + 3, y + 10), fill="#ffffff", width=2)
             draw.line((x + 3, y + 2, x - 3, y + 10), fill="#ffffff", width=2)
+    elif kind == "snow_5flake":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x in (24, 42, 60, 78, 96):
+            draw.line((x, 98, x, 114), fill="#ffffff", width=3)
+            draw.line((x - 6, 106, x + 6, 106), fill="#ffffff", width=3)
+            draw.line((x - 5, 101, x + 5, 111), fill="#ffffff", width=3)
+            draw.line((x + 5, 101, x - 5, 111), fill="#ffffff", width=3)
+    elif kind == "snow_10flake":
+        draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
+        draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
+        draw.ellipse((64, 44, 114, 94), fill="#d6dbe1")
+        draw.rounded_rectangle((12, 54, 108, 96), radius=18, fill="#d6dbe1")
+        for x, y in ((16, 98), (26, 98), (36, 98), (46, 98), (56, 98), (66, 98), (76, 98), (86, 98), (96, 98), (106, 98)):
+            draw.line((x, y, x, y + 10), fill="#ffffff", width=2)
+            draw.line((x - 3, y + 5, x + 3, y + 5), fill="#ffffff", width=2)
+            draw.line((x - 2, y + 2, x + 2, y + 8), fill="#ffffff", width=2)
+            draw.line((x + 2, y + 2, x - 2, y + 8), fill="#ffffff", width=2)
     elif kind == "sleet":
         draw.ellipse((14, 44, 64, 94), fill="#d6dbe1")
         draw.ellipse((34, 26, 86, 76), fill="#d6dbe1")
