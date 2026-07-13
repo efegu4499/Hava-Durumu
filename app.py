@@ -24,10 +24,14 @@ def build_daily_summary(weather, forecast, hourly):
     if temp is not None and desc:
         parts.append(f"Şu an {temp}°C ve {desc.lower()}.")
 
+    current_temp = weather.get("temperature")
+    today_min_temp = None
+
     if forecast:
         today = forecast[0]
         max_temp = today.get("max_temp")
         min_temp = today.get("min_temp")
+        today_min_temp = min_temp
         if max_temp is not None and min_temp is not None:
             parts.append(f"Bugün {max_temp}° / {min_temp}° aralığında.")
 
@@ -38,10 +42,16 @@ def build_daily_summary(weather, forecast, hourly):
                 parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
             else:
                 parts.append("Bugün yağış beklenmiyor.")
+        # Only mention "no snow" when temperatures are realistically close to snow conditions.
+        cold_enough_for_snow = (
+            (current_temp is not None and current_temp <= 5)
+            or (today_min_temp is not None and today_min_temp <= 3)
+        )
+
         if snow_cm is not None:
             if snow_cm > 0:
                 parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
-            else:
+            elif cold_enough_for_snow:
                 parts.append("Bugün kar yağışı beklenmiyor.")
 
     if hourly:
@@ -52,9 +62,15 @@ def build_daily_summary(weather, forecast, hourly):
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik yağış {peak_rain} mm.")
         else:
             parts.append("Önümüzdeki saatlerde yağış beklenmiyor.")
+        next_hours_min_temp = min((item.get("temperature") for item in next_hours if item.get("temperature") is not None), default=None)
+        cold_next_hours = (
+            (next_hours_min_temp is not None and next_hours_min_temp <= 3)
+            or (current_temp is not None and current_temp <= 5)
+        )
+
         if peak_snow > 0:
             parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
-        else:
+        elif cold_next_hours:
             parts.append("Önümüzdeki saatlerde kar beklenmiyor.")
 
     wind_speed = weather.get("wind_speed")
