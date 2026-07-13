@@ -2,8 +2,8 @@ const CACHE_NAME = "gokyra-weather-v1";
 const ASSETS_TO_CACHE = [
   "/",
   "/manifest.webmanifest",
-  "/assets/icons/icon-192.png",
-  "/assets/icons/icon-512.png"
+  "/static/icons/icon-192.png",
+  "/static/icons/icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
