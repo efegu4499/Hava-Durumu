@@ -327,6 +327,7 @@ def build_daily_summary(weather, forecast, hourly, lang="tr"):
 
     current_temp = weather.get("temperature")
     today_min_temp = None
+    rain_like_codes = {51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99}
 
     if forecast:
         today = forecast[0]
@@ -341,8 +342,9 @@ def build_daily_summary(weather, forecast, hourly, lang="tr"):
 
         rain_mm = today.get("precipitation_sum_mm")
         snow_cm = today.get("snowfall_sum_cm")
+        today_has_rain_code = today.get("weather_code") in rain_like_codes
         if rain_mm is not None:
-            if rain_mm > 0:
+            if rain_mm > 0 and today_has_rain_code:
                 if is_en:
                     parts.append(f"Expected daily precipitation: {rain_mm} mm.")
                 else:
@@ -372,7 +374,8 @@ def build_daily_summary(weather, forecast, hourly, lang="tr"):
         next_hours = hourly[:6]
         peak_rain = max((item.get("precipitation_mm") or 0) for item in next_hours) if next_hours else 0
         peak_snow = max((item.get("snowfall_cm") or 0) for item in next_hours) if next_hours else 0
-        if peak_rain > 0:
+        has_rain_code_next_hours = any(item.get("weather_code") in rain_like_codes for item in next_hours)
+        if peak_rain > 0 and has_rain_code_next_hours:
             if is_en:
                 parts.append(f"Peak hourly precipitation in the next hours: {peak_rain} mm.")
             else:
