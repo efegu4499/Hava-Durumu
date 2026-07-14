@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from weather_app import (
+    _get_weatherstack_api_key,
     _select_felt_temperature,
     _weatherstack_feels_like_temperature,
     calculate_feels_like_c,
@@ -95,6 +96,16 @@ class WeatherAppTests(unittest.TestCase):
     def test_weatherstack_feels_like_temperature_parses_value(self, mock_get_json, _mock_getenv):
         mock_get_json.return_value = {"current": {"feelslike": 14.6}}
         self.assertEqual(_weatherstack_feels_like_temperature(41.0, 29.0), 14.6)
+
+    @patch("weather_app.os.getenv")
+    def test_weatherstack_api_key_reads_fallback_env_names(self, mock_getenv):
+        mapping = {
+            "WEATHERSTACK_API_KEY": "",
+            "WEATHERSTACK_ACCESS_KEY": "access-demo",
+            "WEATHERSTACK_KEY": "",
+        }
+        mock_getenv.side_effect = lambda name: mapping.get(name, "")
+        self.assertEqual(_get_weatherstack_api_key(), "access-demo")
 
     @patch("weather_app.os.getenv", return_value="demo-key")
     @patch("weather_app._get_json")

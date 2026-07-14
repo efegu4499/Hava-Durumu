@@ -524,8 +524,16 @@ def _metno_forecast(lat, lon):
     return _get_json(url)
 
 
+def _get_weatherstack_api_key():
+    for key_name in ("WEATHERSTACK_API_KEY", "WEATHERSTACK_ACCESS_KEY", "WEATHERSTACK_KEY"):
+        value = (os.getenv(key_name) or "").strip()
+        if value:
+            return value
+    return ""
+
+
 def _weatherstack_feels_like_temperature(lat, lon):
-    api_key = (os.getenv("WEATHERSTACK_API_KEY") or "").strip()
+    api_key = _get_weatherstack_api_key()
     if not api_key:
         return None
 
@@ -538,17 +546,23 @@ def _weatherstack_feels_like_temperature(lat, lon):
             "cache_bust": int(time.time() // 30),
         }
     )
-    # Weatherstack free plan typically serves over HTTP.
-    url = f"http://api.weatherstack.com/current?{query}"
-    try:
-        data = _get_json(url)
-    except Exception:
-        return None
 
-    current = (data or {}).get("current") or {}
-    if not current:
-        return None
-    return _to_float(current.get("feelslike"))
+    for base_url in (
+        "https://api.weatherstack.com/current",
+        "http://api.weatherstack.com/current",
+    ):
+        url = f"{base_url}?{query}"
+        try:
+            data = _get_json(url)
+        except Exception:
+            continue
+
+        current = (data or {}).get("current") or {}
+        feels_like = _to_float(current.get("feelslike"))
+        if feels_like is not None:
+            return feels_like
+
+    return None
 
 
 def _select_felt_temperature(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
