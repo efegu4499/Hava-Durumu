@@ -1,11 +1,12 @@
 import os
+import time
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
-import json
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 
 from weather_app import (
+    _get_json,
     _normalize_text,
+    get_current_weather,
     get_weather_description,
     get_weather_bundle,
     suggest_locations,
@@ -13,6 +14,13 @@ from weather_app import (
 
 app = Flask(__name__)
 app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
+
+_LOCATIONS_CACHE = {}
+_LOCATIONS_CACHE_TTL = 300
+_PROVINCE_WEATHER_CACHE = {}
+_PROVINCE_WEATHER_CACHE_TTL = 180
+_SKI_CACHE = {"ts": 0.0, "items": []}
+_SKI_CACHE_TTL = 600
 
 
 SKI_RESORTS = [
@@ -268,12 +276,14 @@ def _fetch_open_meteo_current(lat, lon):
         }
     )
     url = f"https://api.open-meteo.com/v1/forecast?{query}"
-    request = Request(url, headers={"User-Agent": "weather-app/1.0"})
-    with urlopen(request, timeout=10) as response:
-        return json.loads(response.read().decode("utf-8"))
+    return _get_json(url)
 
 
 def get_ski_resorts_snow_data(lang="tr"):
+    now = time.time()
+    if _SKI_CACHE["items"] and (now - _SKI_CACHE["ts"]) < _SKI_CACHE_TTL:
+        return _SKI_CACHE["items"]
+
     items = []
     for resort in SKI_RESORTS:
         snow_depth_cm = None
@@ -297,6 +307,9 @@ def get_ski_resorts_snow_data(lang="tr"):
                 "report_url": resort["report_url"],
             }
         )
+
+    _SKI_CACHE["ts"] = time.time()
+    _SKI_CACHE["items"] = items
     return items
 
 
@@ -438,10 +451,18 @@ def locations():
     if len(query) < 2:
         return jsonify([])
 
+    cache_key = _normalize_text(query)
+    cached = _LOCATIONS_CACHE.get(cache_key)
+    now = time.time()
+    if cached and (now - cached[0]) < _LOCATIONS_CACHE_TTL:
+        return jsonify(cached[1])
+
     try:
         items = suggest_locations(query, limit=12)
     except Exception:
         items = []
+
+    _LOCATIONS_CACHE[cache_key] = (time.time(), items)
 
     return jsonify(items)
 
@@ -538,19 +559,25 @@ def province_weather():
     if not city:
         return jsonify({"error": "city is required"}), 400
 
+    cache_key = f"{_normalize_text(city)}|{lang}"
+    cached = _PROVINCE_WEATHER_CACHE.get(cache_key)
+    now = time.time()
+    if cached and (now - cached[0]) < _PROVINCE_WEATHER_CACHE_TTL:
+        return jsonify(cached[1])
+
     try:
         weather = get_current_weather(city)
         weather["description"] = get_weather_description(weather.get("weather_code"), lang=lang)
-        return jsonify(
-            {
-                "city": weather.get("city") or city,
-                "temperature": weather.get("temperature"),
-                "felt_temperature": weather.get("felt_temperature"),
-                "humidity": weather.get("humidity"),
-                "wind_speed": weather.get("wind_speed"),
-                "description": weather.get("description"),
-            }
-        )
+        payload = {
+            "city": weather.get("city") or city,
+            "temperature": weather.get("temperature"),
+            "felt_temperature": weather.get("felt_temperature"),
+            "humidity": weather.get("humidity"),
+            "wind_speed": weather.get("wind_speed"),
+            "description": weather.get("description"),
+        }
+        _PROVINCE_WEATHER_CACHE[cache_key] = (time.time(), payload)
+        return jsonify(payload)
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
