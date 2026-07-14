@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import unicodedata
 from copy import deepcopy
@@ -523,26 +524,31 @@ def _metno_forecast(lat, lon):
     return _get_json(url)
 
 
-def _open_meteo_apparent_temperature(lat, lon):
+def _weatherstack_feels_like_temperature(lat, lon):
+    api_key = (os.getenv("WEATHERSTACK_API_KEY") or "").strip()
+    if not api_key:
+        return None
+
     query = urlencode(
         {
-            "latitude": lat,
-            "longitude": lon,
-            "current": "apparent_temperature",
-            "timezone": "auto",
-            "models": "ecmwf_ifs025",
+            "access_key": api_key,
+            "query": f"{lat},{lon}",
+            "units": "m",
             # Refresh this value every ~30s instead of being pinned by URL cache.
             "cache_bust": int(time.time() // 30),
         }
     )
-    url = f"https://api.open-meteo.com/v1/forecast?{query}"
+    # Weatherstack free plan typically serves over HTTP.
+    url = f"http://api.weatherstack.com/current?{query}"
     try:
         data = _get_json(url)
     except Exception:
         return None
 
     current = (data or {}).get("current") or {}
-    return _to_float(current.get("apparent_temperature"))
+    if not current:
+        return None
+    return _to_float(current.get("feelslike"))
 
 
 def _select_felt_temperature(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
@@ -654,7 +660,7 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
         current_temp,
         current_humidity,
         current_wind_ms,
-        _open_meteo_apparent_temperature(city["latitude"], city["longitude"]),
+        _weatherstack_feels_like_temperature(city["latitude"], city["longitude"]),
     )
 
     weather = {

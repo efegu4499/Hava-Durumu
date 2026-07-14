@@ -2,8 +2,8 @@ import unittest
 from unittest.mock import patch
 
 from weather_app import (
-    _open_meteo_apparent_temperature,
     _select_felt_temperature,
+    _weatherstack_feels_like_temperature,
     calculate_feels_like_c,
     format_forecast_entry,
     get_icon_name_for_code,
@@ -90,15 +90,21 @@ class WeatherAppTests(unittest.TestCase):
         feels_like = calculate_feels_like_c(2, humidity_percent=60, wind_speed_ms=8)
         self.assertLess(feels_like, 2)
 
+    @patch("weather_app.os.getenv", return_value="demo-key")
     @patch("weather_app._get_json")
-    def test_open_meteo_apparent_temperature_parses_value(self, mock_get_json):
-        mock_get_json.return_value = {"current": {"apparent_temperature": 14.6}}
-        self.assertEqual(_open_meteo_apparent_temperature(41.0, 29.0), 14.6)
+    def test_weatherstack_feels_like_temperature_parses_value(self, mock_get_json, _mock_getenv):
+        mock_get_json.return_value = {"current": {"feelslike": 14.6}}
+        self.assertEqual(_weatherstack_feels_like_temperature(41.0, 29.0), 14.6)
 
+    @patch("weather_app.os.getenv", return_value="demo-key")
     @patch("weather_app._get_json")
-    def test_open_meteo_apparent_temperature_fallbacks_on_error(self, mock_get_json):
+    def test_weatherstack_feels_like_temperature_fallbacks_on_error(self, mock_get_json, _mock_getenv):
         mock_get_json.side_effect = RuntimeError("network")
-        self.assertIsNone(_open_meteo_apparent_temperature(41.0, 29.0))
+        self.assertIsNone(_weatherstack_feels_like_temperature(41.0, 29.0))
+
+    @patch("weather_app.os.getenv", return_value="")
+    def test_weatherstack_feels_like_temperature_returns_none_without_api_key(self, _mock_getenv):
+        self.assertIsNone(_weatherstack_feels_like_temperature(41.0, 29.0))
 
     def test_select_felt_temperature_uses_computed_when_api_equals_temp(self):
         value = _select_felt_temperature(2, 65, 8, 2)
