@@ -366,20 +366,25 @@ def suggest_locations(query_text, limit=12):
     suggestions = []
     seen = set()
     for result in results:
-        if result.get("country_code") != "TR":
-            continue
-
         name = (result.get("name") or "").strip()
         admin1 = (result.get("admin1") or "").strip()
+        country = (result.get("country") or "").strip()
         if not name:
             continue
 
-        label = f"{name}, {admin1}" if admin1 and admin1 != name else name
+        parts = [name]
+        if admin1 and admin1 != name:
+            parts.append(admin1)
+        if country and country not in parts:
+            parts.append(country)
+
+        label = ", ".join(parts)
         if label in seen:
             continue
 
+        value = f"{name}, {admin1}" if admin1 and admin1 != name else name
         seen.add(label)
-        suggestions.append({"label": label, "value": label})
+        suggestions.append({"label": label, "value": value})
         if len(suggestions) >= limit:
             break
 
