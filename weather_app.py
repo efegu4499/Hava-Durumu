@@ -239,17 +239,24 @@ def _get_json(url):
         return cached[1]
 
     request = Request(url, headers={"User-Agent": "weather-app/1.0"})
-    try:
-        with urlopen(request, timeout=10) as response:
-            data = json.loads(response.read().decode("utf-8"))
-            _JSON_CACHE[url] = (now, data)
-            return data
-    except HTTPError as exc:
-        if exc.code == 429:
+    retry_delays = [0.45, 0.9, 1.5]
+    for attempt, delay in enumerate(retry_delays, start=1):
+        try:
+            with urlopen(request, timeout=10) as response:
+                data = json.loads(response.read().decode("utf-8"))
+                _JSON_CACHE[url] = (time.time(), data)
+                return data
+        except HTTPError as exc:
+            if exc.code != 429:
+                raise
+
             if cached:
                 return cached[1]
-            raise ValueError("Servis su anda cok yogun (HTTP 429). Lutfen kisa bir sure sonra tekrar deneyin.")
-        raise
+
+            if attempt == len(retry_delays):
+                raise ValueError("Servis su anda cok yogun (HTTP 429). Lutfen 30-60 saniye sonra tekrar deneyin.")
+
+            time.sleep(delay)
 
 
 def _normalize_text(value):
