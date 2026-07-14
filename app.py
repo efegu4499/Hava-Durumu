@@ -122,7 +122,7 @@ def get_ski_texts(lang):
             "subtitle": "Current modeled snow depth and live report links for major resorts.",
             "depth": "Current Snow Depth",
             "updated": "Updated",
-            "open_report": "Open Snow Report",
+            "open_report": "More Info",
             "back": "Back To Weather",
             "unavailable": "Data unavailable",
         }
@@ -132,7 +132,7 @@ def get_ski_texts(lang):
         "subtitle": "Buyuk merkezler icin anlik model kar birikimi ve canli rapor baglantisi.",
         "depth": "Guncel Kar Birikimi",
         "updated": "Guncellendi",
-        "open_report": "Kar Raporunu Ac",
+        "open_report": "Daha Fazla Bilgi",
         "back": "Hava Durumuna Don",
         "unavailable": "Veri alinamadi",
     }
