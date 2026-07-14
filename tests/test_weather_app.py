@@ -1,6 +1,7 @@
 import unittest
 
 from weather_app import (
+    calculate_feels_like_c,
     format_forecast_entry,
     get_icon_name_for_code,
     get_rain_intensity_style,
@@ -77,6 +78,14 @@ class WeatherAppTests(unittest.TestCase):
 
     def test_wind_direction_arrow_maps_northeast(self):
         self.assertEqual(get_wind_direction_arrow(45), "↗")
+
+    def test_feels_like_higher_in_hot_humid_conditions(self):
+        feels_like = calculate_feels_like_c(33, humidity_percent=75, wind_speed_ms=1)
+        self.assertGreater(feels_like, 33)
+
+    def test_feels_like_lower_in_cold_windy_conditions(self):
+        feels_like = calculate_feels_like_c(2, humidity_percent=60, wind_speed_ms=8)
+        self.assertLess(feels_like, 2)
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

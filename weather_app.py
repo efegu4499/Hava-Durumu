@@ -137,6 +137,41 @@ def get_wind_direction_arrow(degrees):
     return arrows[index]
 
 
+def calculate_feels_like_c(temp_c, humidity_percent=None, wind_speed_ms=None):
+    temp = _to_float(temp_c)
+    humidity = _to_float(humidity_percent)
+    wind_ms = _to_float(wind_speed_ms)
+
+    if temp is None:
+        return None
+
+    # Heat index approximation for warm and humid conditions.
+    if humidity is not None and temp >= 27:
+        temp_f = (temp * 9.0 / 5.0) + 32.0
+        hi_f = (
+            -42.379
+            + 2.04901523 * temp_f
+            + 10.14333127 * humidity
+            - 0.22475541 * temp_f * humidity
+            - 0.00683783 * temp_f * temp_f
+            - 0.05481717 * humidity * humidity
+            + 0.00122874 * temp_f * temp_f * humidity
+            + 0.00085282 * temp_f * humidity * humidity
+            - 0.00000199 * temp_f * temp_f * humidity * humidity
+        )
+        return round((hi_f - 32.0) * 5.0 / 9.0, 1)
+
+    # Wind chill approximation for cold and windy conditions.
+    if wind_ms is not None and temp <= 10:
+        wind_kmh = max(wind_ms * 3.6, 0.0)
+        if wind_kmh >= 4.8:
+            wind_term = wind_kmh ** 0.16
+            wc = 13.12 + 0.6215 * temp - 11.37 * wind_term + 0.3965 * temp * wind_term
+            return round(wc, 1)
+
+    return round(temp, 1)
+
+
 def get_rain_intensity_style(mm_amount, period="hourly", lang="tr"):
     if mm_amount is None:
         return None, None
@@ -569,16 +604,23 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
     )
     current_code = _metno_symbol_to_code(current_symbol)
     wind_dir = _to_float(current_instant.get("wind_from_direction"))
+    current_temp = _to_float(current_instant.get("air_temperature"))
+    current_humidity = _to_float(current_instant.get("relative_humidity"))
+    current_wind_ms = _to_float(current_instant.get("wind_speed"))
 
     weather = {
         "city": city["name"],
         "admin1": city.get("admin1"),
         "admin2": city.get("admin2"),
         "country": city["country"],
-        "temperature": _to_float(current_instant.get("air_temperature")),
-        "felt_temperature": _to_float(current_instant.get("air_temperature")),
-        "humidity": _to_float(current_instant.get("relative_humidity")),
-        "wind_speed": _to_float(current_instant.get("wind_speed")),
+        "temperature": current_temp,
+        "felt_temperature": calculate_feels_like_c(
+            current_temp,
+            humidity_percent=current_humidity,
+            wind_speed_ms=current_wind_ms,
+        ),
+        "humidity": current_humidity,
+        "wind_speed": current_wind_ms,
         "wind_direction": wind_dir,
         "wind_direction_text": get_wind_direction_text(wind_dir),
         "wind_direction_arrow": get_wind_direction_arrow(wind_dir),
