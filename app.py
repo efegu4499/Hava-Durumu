@@ -111,7 +111,7 @@ def get_ui_texts(lang):
         "snow": "Kar",
         "no_favorites": "Henuz favori sehir yok.",
         "searching": "Araniyor...",
-        "ski_tab": "Kayak Karlari",
+        "ski_tab": "Kayak Merkezleri Kar Birikimi",
     }
 
 
