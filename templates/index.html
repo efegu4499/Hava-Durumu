@@ -839,6 +839,7 @@
         const TEXT_NO_FAVORITES = {{ ui_texts.no_favorites|tojson }};
 
         let activeRequestId = 0;
+        let suggestionTimer = null;
 
         function readJSON(key, fallback) {
             try {
@@ -1204,10 +1205,20 @@
         cityInput.addEventListener("input", (event) => {
             const queryText = event.target.value.trim();
             if (queryText.length < 2) {
+                if (suggestionTimer) {
+                    clearTimeout(suggestionTimer);
+                    suggestionTimer = null;
+                }
                 hideSuggestions();
                 return;
             }
-            fetchSuggestions(queryText);
+
+            if (suggestionTimer) {
+                clearTimeout(suggestionTimer);
+            }
+            suggestionTimer = setTimeout(() => {
+                fetchSuggestions(queryText);
+            }, 350);
         });
 
         document.addEventListener("click", (event) => {

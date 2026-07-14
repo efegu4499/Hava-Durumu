@@ -1,9 +1,13 @@
 import json
+import time
 import unicodedata
 from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+
+_JSON_CACHE = {}
+_JSON_CACHE_TTL_SECONDS = 120
 
 WEATHER_CODES_TR = {
     0: "Açık",
@@ -229,9 +233,23 @@ def _get_day_name(date_text):
 
 
 def _get_json(url):
+    now = time.time()
+    cached = _JSON_CACHE.get(url)
+    if cached and (now - cached[0]) < _JSON_CACHE_TTL_SECONDS:
+        return cached[1]
+
     request = Request(url, headers={"User-Agent": "weather-app/1.0"})
-    with urlopen(request, timeout=10) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urlopen(request, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            _JSON_CACHE[url] = (now, data)
+            return data
+    except HTTPError as exc:
+        if exc.code == 429:
+            if cached:
+                return cached[1]
+            raise ValueError("Servis su anda cok yogun (HTTP 429). Lutfen kisa bir sure sonra tekrar deneyin.")
+        raise
 
 
 def _normalize_text(value):
