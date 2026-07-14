@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 _JSON_CACHE = {}
 _JSON_CACHE_TTL_SECONDS = 120
 _BUNDLE_CACHE = {}
-_BUNDLE_CACHE_TTL_SECONDS = 90
+_BUNDLE_CACHE_TTL_SECONDS = 30
 
 WEATHER_CODES_TR = {
     0: "Açık",
@@ -531,6 +531,8 @@ def _open_meteo_apparent_temperature(lat, lon):
             "current": "apparent_temperature",
             "timezone": "auto",
             "models": "ecmwf_ifs025",
+            # Refresh this value every ~30s instead of being pinned by URL cache.
+            "cache_bust": int(time.time() // 30),
         }
     )
     url = f"https://api.open-meteo.com/v1/forecast?{query}"
