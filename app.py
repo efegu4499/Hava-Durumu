@@ -53,6 +53,41 @@ SKI_RESORTS = [
         "longitude": 42.5984,
         "report_url": "https://www.snow-forecast.com/resorts/Sarikamis",
     },
+    {
+        "name": "Zermatt",
+        "region": "Switzerland",
+        "latitude": 46.0207,
+        "longitude": 7.7491,
+        "report_url": "https://www.snow-forecast.com/resorts/Zermatt",
+    },
+    {
+        "name": "Chamonix",
+        "region": "France",
+        "latitude": 45.9237,
+        "longitude": 6.8694,
+        "report_url": "https://www.snow-forecast.com/resorts/Chamonix",
+    },
+    {
+        "name": "St. Anton",
+        "region": "Austria",
+        "latitude": 47.1275,
+        "longitude": 10.2641,
+        "report_url": "https://www.snow-forecast.com/resorts/St-Anton",
+    },
+    {
+        "name": "Courchevel",
+        "region": "France",
+        "latitude": 45.4154,
+        "longitude": 6.6341,
+        "report_url": "https://www.snow-forecast.com/resorts/Courchevel",
+    },
+    {
+        "name": "Cortina d'Ampezzo",
+        "region": "Italy",
+        "latitude": 46.5405,
+        "longitude": 12.1357,
+        "report_url": "https://www.snow-forecast.com/resorts/Cortina-d-Ampezzo",
+    },
 ]
 
 
