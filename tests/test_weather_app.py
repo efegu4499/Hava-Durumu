@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from weather_app import (
     _open_meteo_apparent_temperature,
+    _select_felt_temperature,
     calculate_feels_like_c,
     format_forecast_entry,
     get_icon_name_for_code,
@@ -98,6 +99,14 @@ class WeatherAppTests(unittest.TestCase):
     def test_open_meteo_apparent_temperature_fallbacks_on_error(self, mock_get_json):
         mock_get_json.side_effect = RuntimeError("network")
         self.assertIsNone(_open_meteo_apparent_temperature(41.0, 29.0))
+
+    def test_select_felt_temperature_uses_computed_when_api_equals_temp(self):
+        value = _select_felt_temperature(2, 65, 8, 2)
+        self.assertLess(value, 2)
+
+    def test_select_felt_temperature_keeps_api_when_meaningfully_different(self):
+        value = _select_felt_temperature(22, 55, 3, 25.2)
+        self.assertEqual(value, 25.2)
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

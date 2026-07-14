@@ -543,6 +543,27 @@ def _open_meteo_apparent_temperature(lat, lon):
     return _to_float(current.get("apparent_temperature"))
 
 
+def _select_felt_temperature(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
+    temp = _to_float(temp_c)
+    api_value = _to_float(api_apparent_temp)
+    computed = calculate_feels_like_c(
+        temp,
+        humidity_percent=humidity_percent,
+        wind_speed_ms=wind_speed_ms,
+    )
+
+    if api_value is None:
+        return computed
+
+    # If upstream apparent value matches air temperature too closely,
+    # prefer computed value when it captures wind/humidity impact.
+    if temp is not None and abs(api_value - temp) < 0.05:
+        if computed is not None and abs(computed - temp) >= 0.1:
+            return computed
+
+    return round(api_value, 1)
+
+
 def search_city(city_name):
     city_query, location_hint = _split_city_hint(city_name)
     preferred_country_code = _resolve_country_hint(location_hint)
@@ -627,13 +648,12 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
     current_temp = _to_float(current_instant.get("air_temperature"))
     current_humidity = _to_float(current_instant.get("relative_humidity"))
     current_wind_ms = _to_float(current_instant.get("wind_speed"))
-    apparent_temp = _open_meteo_apparent_temperature(city["latitude"], city["longitude"])
-    if apparent_temp is None:
-        apparent_temp = calculate_feels_like_c(
-            current_temp,
-            humidity_percent=current_humidity,
-            wind_speed_ms=current_wind_ms,
-        )
+    apparent_temp = _select_felt_temperature(
+        current_temp,
+        current_humidity,
+        current_wind_ms,
+        _open_meteo_apparent_temperature(city["latitude"], city["longitude"]),
+    )
 
     weather = {
         "city": city["name"],
