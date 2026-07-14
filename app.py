@@ -90,6 +90,90 @@ SKI_RESORTS = [
     },
 ]
 
+TURKEY_PROVINCES = [
+    {"name": "Adana", "lat": 37.0000, "lon": 35.3213},
+    {"name": "Adiyaman", "lat": 37.7648, "lon": 38.2786},
+    {"name": "Afyonkarahisar", "lat": 38.7569, "lon": 30.5387},
+    {"name": "Agri", "lat": 39.7191, "lon": 43.0503},
+    {"name": "Amasya", "lat": 40.6499, "lon": 35.8353},
+    {"name": "Ankara", "lat": 39.9208, "lon": 32.8541},
+    {"name": "Antalya", "lat": 36.8841, "lon": 30.7056},
+    {"name": "Artvin", "lat": 41.1828, "lon": 41.8183},
+    {"name": "Aydin", "lat": 37.8444, "lon": 27.8458},
+    {"name": "Balikesir", "lat": 39.6484, "lon": 27.8826},
+    {"name": "Bilecik", "lat": 40.1426, "lon": 29.9793},
+    {"name": "Bingol", "lat": 38.8855, "lon": 40.4980},
+    {"name": "Bitlis", "lat": 38.4006, "lon": 42.1095},
+    {"name": "Bolu", "lat": 40.7395, "lon": 31.6116},
+    {"name": "Burdur", "lat": 37.7203, "lon": 30.2908},
+    {"name": "Bursa", "lat": 40.1885, "lon": 29.0610},
+    {"name": "Canakkale", "lat": 40.1553, "lon": 26.4142},
+    {"name": "Cankiri", "lat": 40.6013, "lon": 33.6134},
+    {"name": "Corum", "lat": 40.5506, "lon": 34.9556},
+    {"name": "Denizli", "lat": 37.7765, "lon": 29.0864},
+    {"name": "Diyarbakir", "lat": 37.9144, "lon": 40.2306},
+    {"name": "Edirne", "lat": 41.6771, "lon": 26.5557},
+    {"name": "Elazig", "lat": 38.6810, "lon": 39.2264},
+    {"name": "Erzincan", "lat": 39.7500, "lon": 39.5000},
+    {"name": "Erzurum", "lat": 39.9000, "lon": 41.2700},
+    {"name": "Eskisehir", "lat": 39.7767, "lon": 30.5206},
+    {"name": "Gaziantep", "lat": 37.0662, "lon": 37.3833},
+    {"name": "Giresun", "lat": 40.9128, "lon": 38.3895},
+    {"name": "Gumushane", "lat": 40.4603, "lon": 39.4814},
+    {"name": "Hakkari", "lat": 37.5833, "lon": 43.7333},
+    {"name": "Hatay", "lat": 36.2021, "lon": 36.1606},
+    {"name": "Isparta", "lat": 37.7648, "lon": 30.5566},
+    {"name": "Mersin", "lat": 36.8000, "lon": 34.6333},
+    {"name": "Istanbul", "lat": 41.0082, "lon": 28.9784},
+    {"name": "Izmir", "lat": 38.4237, "lon": 27.1428},
+    {"name": "Kars", "lat": 40.6167, "lon": 43.1000},
+    {"name": "Kastamonu", "lat": 41.3887, "lon": 33.7827},
+    {"name": "Kayseri", "lat": 38.7312, "lon": 35.4787},
+    {"name": "Kirklareli", "lat": 41.7355, "lon": 27.2252},
+    {"name": "Kirsehir", "lat": 39.1458, "lon": 34.1605},
+    {"name": "Kocaeli", "lat": 40.8533, "lon": 29.8815},
+    {"name": "Konya", "lat": 37.8746, "lon": 32.4932},
+    {"name": "Kutahya", "lat": 39.4167, "lon": 29.9833},
+    {"name": "Malatya", "lat": 38.3552, "lon": 38.3095},
+    {"name": "Manisa", "lat": 38.6191, "lon": 27.4289},
+    {"name": "Kahramanmaras", "lat": 37.5858, "lon": 36.9371},
+    {"name": "Mardin", "lat": 37.3122, "lon": 40.7351},
+    {"name": "Mugla", "lat": 37.2153, "lon": 28.3636},
+    {"name": "Mus", "lat": 38.9462, "lon": 41.7539},
+    {"name": "Nevsehir", "lat": 38.6244, "lon": 34.7239},
+    {"name": "Nigde", "lat": 37.9667, "lon": 34.6833},
+    {"name": "Ordu", "lat": 40.9839, "lon": 37.8764},
+    {"name": "Rize", "lat": 41.0201, "lon": 40.5234},
+    {"name": "Sakarya", "lat": 40.7569, "lon": 30.3781},
+    {"name": "Samsun", "lat": 41.2867, "lon": 36.3300},
+    {"name": "Siirt", "lat": 37.9333, "lon": 41.9500},
+    {"name": "Sinop", "lat": 42.0264, "lon": 35.1551},
+    {"name": "Sivas", "lat": 39.7477, "lon": 37.0179},
+    {"name": "Tekirdag", "lat": 40.9833, "lon": 27.5167},
+    {"name": "Tokat", "lat": 40.3167, "lon": 36.5500},
+    {"name": "Trabzon", "lat": 41.0015, "lon": 39.7178},
+    {"name": "Tunceli", "lat": 39.1083, "lon": 39.5471},
+    {"name": "Sanliurfa", "lat": 37.1674, "lon": 38.7955},
+    {"name": "Usak", "lat": 38.6823, "lon": 29.4082},
+    {"name": "Van", "lat": 38.4891, "lon": 43.4089},
+    {"name": "Yozgat", "lat": 39.8181, "lon": 34.8147},
+    {"name": "Zonguldak", "lat": 41.4564, "lon": 31.7987},
+    {"name": "Aksaray", "lat": 38.3687, "lon": 34.0370},
+    {"name": "Bayburt", "lat": 40.2552, "lon": 40.2249},
+    {"name": "Karaman", "lat": 37.1811, "lon": 33.2150},
+    {"name": "Kirikkale", "lat": 39.8468, "lon": 33.5153},
+    {"name": "Batman", "lat": 37.8812, "lon": 41.1351},
+    {"name": "Sirnak", "lat": 37.4187, "lon": 42.4918},
+    {"name": "Bartin", "lat": 41.6358, "lon": 32.3375},
+    {"name": "Ardahan", "lat": 41.1105, "lon": 42.7022},
+    {"name": "Igdir", "lat": 39.9167, "lon": 44.0333},
+    {"name": "Yalova", "lat": 40.6500, "lon": 29.2667},
+    {"name": "Karabuk", "lat": 41.2061, "lon": 32.6204},
+    {"name": "Kilis", "lat": 36.7184, "lon": 37.1212},
+    {"name": "Osmaniye", "lat": 37.0742, "lon": 36.2461},
+    {"name": "Duzce", "lat": 40.8438, "lon": 31.1565},
+]
+
 
 def get_background_theme(weather_code):
     if weather_code in (0, 1, 2):
@@ -125,6 +209,7 @@ def get_ui_texts(lang):
             "no_favorites": "No favorite cities yet.",
             "searching": "Searching...",
             "ski_tab": "Ski Snow",
+            "map_tab": "Turkey Map",
         }
 
     return {
@@ -147,6 +232,7 @@ def get_ui_texts(lang):
         "no_favorites": "Henuz favori sehir yok.",
         "searching": "Araniyor...",
         "ski_tab": "Kayak Merkezleri Kar Birikimi",
+        "map_tab": "Turkiye Haritasi",
     }
 
 
@@ -426,6 +512,46 @@ def ski_resorts():
         ski_texts=get_ski_texts(lang),
         resorts=get_ski_resorts_snow_data(lang=lang),
     )
+
+
+@app.route("/turkiye-haritasi", methods=["GET"])
+def turkey_map():
+    lang = (request.args.get("lang") or "tr").strip().lower()
+    if lang not in {"tr", "en"}:
+        lang = "tr"
+    return render_template(
+        "turkey_map.html",
+        lang=lang,
+        ui_texts=get_ui_texts(lang),
+        provinces=TURKEY_PROVINCES,
+    )
+
+
+@app.route("/api/province-weather", methods=["GET"])
+def province_weather():
+    city = (request.args.get("city") or "").strip()
+    lang = (request.args.get("lang") or "tr").strip().lower()
+    if lang not in {"tr", "en"}:
+        lang = "tr"
+
+    if not city:
+        return jsonify({"error": "city is required"}), 400
+
+    try:
+        weather = get_current_weather(city)
+        weather["description"] = get_weather_description(weather.get("weather_code"), lang=lang)
+        return jsonify(
+            {
+                "city": weather.get("city") or city,
+                "temperature": weather.get("temperature"),
+                "felt_temperature": weather.get("felt_temperature"),
+                "humidity": weather.get("humidity"),
+                "wind_speed": weather.get("wind_speed"),
+                "description": weather.get("description"),
+            }
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 def start_server():

@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ui_texts.map_tab }}</title>
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin=""
+    >
+    <style>
+        :root {
+            --bg: linear-gradient(145deg, #eaf6ff 0%, #f7fcff 60%, #ffffff 100%);
+            --ink: #173c57;
+            --panel: #ffffff;
+            --line: #d5e7f4;
+            --btn: #0d8195;
+            --btn-alt: #255f87;
+            --shadow: 0 16px 40px rgba(16, 43, 66, 0.16);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+            padding: 18px;
+        }
+
+        .page {
+            width: min(1200px, 96vw);
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.2rem, 2.2vw, 2rem);
+        }
+
+        .hint {
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: #4f6e83;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            background: var(--btn);
+        }
+
+        .btn.alt {
+            background: var(--btn-alt);
+        }
+
+        #map {
+            width: 100%;
+            height: min(74vh, 760px);
+            border-radius: 18px;
+            border: 1px solid #bdd7ea;
+            overflow: hidden;
+        }
+
+        .leaflet-popup-content {
+            margin: 10px 12px;
+            font-size: 13px;
+            color: #12384f;
+        }
+
+        .popup-title {
+            font-size: 15px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #0f4a69;
+        }
+
+        .popup-row {
+            margin: 3px 0;
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <div class="top">
+            <h1>{{ ui_texts.map_tab }}</h1>
+            <div class="actions">
+                <a class="btn alt" href="/?lang={{ lang }}">{{ ui_texts.title }}</a>
+                {% if lang == 'tr' %}
+                <a class="btn" href="/turkiye-haritasi?lang=en">English</a>
+                {% else %}
+                <a class="btn" href="/turkiye-haritasi?lang=tr">Turkce</a>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if lang == 'en' %}
+        <p class="hint">Zoom and click any province marker to view current weather data.</p>
+        {% else %}
+        <p class="hint">Yakinlastirip il isaretlerine tiklayarak guncel hava durumunu gorebilirsin.</p>
+        {% endif %}
+
+        <div id="map"></div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        const LANG = {{ lang|tojson }};
+        const PROVINCES = {{ provinces|tojson }};
+
+        const labels = LANG === "en"
+            ? {
+                loading: "Loading...",
+                temp: "Temperature",
+                feels: "Feels Like",
+                humidity: "Humidity",
+                wind: "Wind",
+                desc: "Status",
+                error: "Data unavailable",
+            }
+            : {
+                loading: "Yukleniyor...",
+                temp: "Sicaklik",
+                feels: "Hissedilen",
+                humidity: "Nem",
+                wind: "Ruzgar",
+                desc: "Durum",
+                error: "Veri alinamadi",
+            };
+
+        const map = L.map("map", {
+            zoomControl: true,
+            minZoom: 5,
+            maxZoom: 11,
+        }).setView([39.0, 35.2], 6);
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(map);
+
+        async function fetchProvinceWeather(city) {
+            const res = await fetch(`/api/province-weather?city=${encodeURIComponent(city)}&lang=${encodeURIComponent(LANG)}`);
+            if (!res.ok) {
+                throw new Error("request failed");
+            }
+            return res.json();
+        }
+
+        function weatherHtml(data, fallbackName) {
+            if (!data || data.error) {
+                return `<div class="popup-title">${fallbackName}</div><div class="popup-row">${labels.error}</div>`;
+            }
+
+            const feels = data.felt_temperature === null || data.felt_temperature === undefined
+                ? "-"
+                : `${data.felt_temperature} C`;
+
+            return `
+                <div class="popup-title">${data.city || fallbackName}</div>
+                <div class="popup-row"><strong>${labels.temp}:</strong> ${data.temperature ?? "-"} C</div>
+                <div class="popup-row"><strong>${labels.feels}:</strong> ${feels}</div>
+                <div class="popup-row"><strong>${labels.humidity}:</strong> ${data.humidity ?? "-"} %</div>
+                <div class="popup-row"><strong>${labels.wind}:</strong> ${data.wind_speed ?? "-"} km/s</div>
+                <div class="popup-row"><strong>${labels.desc}:</strong> ${data.description ?? "-"}</div>
+            `;
+        }
+
+        PROVINCES.forEach((item) => {
+            const marker = L.circleMarker([item.lat, item.lon], {
+                radius: 6,
+                weight: 2,
+                color: "#0f6d86",
+                fillColor: "#25a7c3",
+                fillOpacity: 0.85,
+            }).addTo(map);
+
+            marker.bindPopup(`<div class="popup-title">${item.name}</div><div class="popup-row">${labels.loading}</div>`);
+
+            marker.on("click", async () => {
+                marker.setPopupContent(`<div class="popup-title">${item.name}</div><div class="popup-row">${labels.loading}</div>`);
+                try {
+                    const data = await fetchProvinceWeather(item.name);
+                    marker.setPopupContent(weatherHtml(data, item.name));
+                } catch (_) {
+                    marker.setPopupContent(weatherHtml({ error: true }, item.name));
+                }
+            });
+        });
+    </script>
+</body>
+</html>
