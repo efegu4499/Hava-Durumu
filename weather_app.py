@@ -5,7 +5,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
-WEATHER_CODES = {
+WEATHER_CODES_TR = {
     0: "Açık",
     1: "Çoğunlukla Açık",
     2: "Parçalı Bulutlu",
@@ -36,9 +36,42 @@ WEATHER_CODES = {
     99: "Şiddetli Dolu İçeren Fırtına",
 }
 
+WEATHER_CODES_EN = {
+    0: "Clear",
+    1: "Mostly Clear",
+    2: "Partly Cloudy",
+    3: "Overcast",
+    45: "Fog",
+    48: "Rime Fog",
+    51: "Light Drizzle",
+    53: "Moderate Drizzle",
+    55: "Dense Drizzle",
+    56: "Light Freezing Drizzle",
+    57: "Dense Freezing Drizzle",
+    61: "Light Rain",
+    63: "Moderate Rain",
+    65: "Heavy Rain",
+    66: "Light Freezing Rain",
+    67: "Heavy Freezing Rain",
+    71: "Light Snow",
+    73: "Moderate Snow",
+    75: "Heavy Snow",
+    77: "Snow Grains",
+    80: "Light Showers",
+    81: "Moderate Showers",
+    82: "Violent Showers",
+    85: "Light Snow Showers",
+    86: "Heavy Snow Showers",
+    95: "Thunderstorm",
+    96: "Thunderstorm With Hail",
+    99: "Severe Thunderstorm With Hail",
+}
 
-def get_weather_description(code):
-    return WEATHER_CODES.get(code, "Bilinmeyen")
+
+def get_weather_description(code, lang="tr"):
+    if lang == "en":
+        return WEATHER_CODES_EN.get(code, "Unknown")
+    return WEATHER_CODES_TR.get(code, "Bilinmeyen")
 
 
 def get_icon_name_for_code(code, hour=None):
@@ -97,7 +130,7 @@ def get_wind_direction_arrow(degrees):
     return arrows[index]
 
 
-def get_rain_intensity_style(mm_amount, period="hourly"):
+def get_rain_intensity_style(mm_amount, period="hourly", lang="tr"):
     if mm_amount is None:
         return None, None
 
@@ -108,6 +141,15 @@ def get_rain_intensity_style(mm_amount, period="hourly"):
 
     if mm <= 0:
         return None, None
+
+    if lang == "en":
+        if mm < 5:
+            return "Light Rain", "rain_1drop"
+        if mm < 20:
+            return "Rainy", "rain_3drop"
+        if mm < 50:
+            return "Heavy Rain", "rain_5drop"
+        return "Extreme Heavy Rain", "rain_10drop"
 
     if mm < 5:
         return "Hafif Yağmur", "rain_1drop"
@@ -118,17 +160,24 @@ def get_rain_intensity_style(mm_amount, period="hourly"):
     return "Aşırı Kuvvetli Yağmur", "rain_10drop"
 
 
-def get_thunder_rain_description(mm_amount):
+def get_thunder_rain_description(mm_amount, lang="tr"):
     if mm_amount is None:
-        return "Gök Gürültülü Yağmur"
+        return "Thunder Rain" if lang == "en" else "Gök Gürültülü Yağmur"
 
     try:
         mm = float(mm_amount)
     except (TypeError, ValueError):
-        return "Gök Gürültülü Yağmur"
+        return "Thunder Rain" if lang == "en" else "Gök Gürültülü Yağmur"
 
     if mm <= 0:
-        return "Gök Gürültülü Yağmur"
+        return "Thunder Rain" if lang == "en" else "Gök Gürültülü Yağmur"
+    if lang == "en":
+        if mm < 20:
+            return "Thunder Light Rain"
+        if mm < 50:
+            return "Thunder Heavy Rain"
+        return "Thunder Extreme Heavy Rain"
+
     if mm < 20:
         return "Gök Gürültülü Hafif Yağmur"
     if mm < 50:
@@ -136,7 +185,7 @@ def get_thunder_rain_description(mm_amount):
     return "Gök Gürültülü Aşırı Kuvvetli Yağmur"
 
 
-def get_snow_intensity_style(cm_amount, period="hourly"):
+def get_snow_intensity_style(cm_amount, period="hourly", lang="tr"):
     if cm_amount is None:
         return None, None
 
@@ -147,6 +196,15 @@ def get_snow_intensity_style(cm_amount, period="hourly"):
 
     if cm <= 0:
         return None, None
+
+    if lang == "en":
+        if cm < 5:
+            return "Light Snow", "snow_1flake"
+        if cm < 20:
+            return "Snowy", "snow_3flake"
+        if cm < 50:
+            return "Heavy Snow", "snow_5flake"
+        return "Intense Snow", "snow_10flake"
 
     if cm < 5:
         return "Hafif Karlı", "snow_1flake"
@@ -328,7 +386,7 @@ def suggest_locations(query_text, limit=12):
     return suggestions
 
 
-def get_hourly_weather(city_name, hours=24):
+def get_hourly_weather(city_name, hours=24, lang="tr"):
     city = search_city(city_name)
     url = (
         "https://api.open-meteo.com/v1/forecast?"
@@ -371,20 +429,20 @@ def get_hourly_weather(city_name, hours=24):
             hour_int = None
         precip_mm = precip_mm_values[i] if i < len(precip_mm_values) else None
         snow_cm = snow_cm_values[i] if i < len(snow_cm_values) else None
-        description = get_weather_description(code)
+        description = get_weather_description(code, lang=lang)
         icon_name = get_icon_name_for_code(code, hour=hour_int)
         rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
-            precip_mm, period="hourly"
+            precip_mm, period="hourly", lang=lang
         )
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
         elif code in thunder_like_codes:
-            description = get_thunder_rain_description(precip_mm)
+            description = get_thunder_rain_description(precip_mm, lang=lang)
             if rain_intensity_icon:
                 icon_name = rain_intensity_icon
         snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
-            snow_cm, period="hourly"
+            snow_cm, period="hourly", lang=lang
         )
         if code in snow_like_codes and snow_intensity_text:
             description = snow_intensity_text
@@ -435,7 +493,7 @@ def get_current_weather(city_name):
     }
 
 
-def get_forecast_weather(city_name, days=5):
+def get_forecast_weather(city_name, days=5, lang="tr"):
     city = search_city(city_name)
     forecast_url = (
         "https://api.open-meteo.com/v1/forecast?"
@@ -463,20 +521,20 @@ def get_forecast_weather(city_name, days=5):
         code = codes[index] if index < len(codes) else 0
         day_precip_mm = precip_sum[index] if index < len(precip_sum) else None
         day_snow_cm = snow_sum[index] if index < len(snow_sum) else None
-        description = get_weather_description(code)
+        description = get_weather_description(code, lang=lang)
         icon_name = get_icon_name_for_code(code)
         rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
-            day_precip_mm, period="daily"
+            day_precip_mm, period="daily", lang=lang
         )
         if code in rain_like_codes and rain_intensity_text:
             description = rain_intensity_text
             icon_name = rain_intensity_icon or icon_name
         elif code in thunder_like_codes:
-            description = get_thunder_rain_description(day_precip_mm)
+            description = get_thunder_rain_description(day_precip_mm, lang=lang)
             if rain_intensity_icon:
                 icon_name = rain_intensity_icon
         snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
-            day_snow_cm, period="daily"
+            day_snow_cm, period="daily", lang=lang
         )
         if code in snow_like_codes and snow_intensity_text:
             description = snow_intensity_text

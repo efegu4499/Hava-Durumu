@@ -638,27 +638,31 @@
 
         <div class="content-wrap">
             <div class="menu-panel">
-                <h1>Gokyra Weather</h1>
+                <h1>{{ ui_texts.title }}</h1>
 
                 <form id="weather-form" method="post" autocomplete="off">
                     <div class="search-wrap">
-                        <input id="city-input" type="text" name="city" value="{{ city }}" placeholder="Ilce veya il adi girin">
+                        <input id="city-input" type="text" name="city" value="{{ city }}" placeholder="{{ ui_texts.city_placeholder }}">
                         <div id="suggestions" class="suggestions"></div>
                     </div>
+                    <select id="lang-select" name="lang" aria-label="Language">
+                        <option value="tr" {% if lang == 'tr' %}selected{% endif %}>Turkce</option>
+                        <option value="en" {% if lang == 'en' %}selected{% endif %}>English</option>
+                    </select>
                     <div class="button-row">
-                        <button id="search-submit-btn" type="submit">Sorgula</button>
-                        <button id="add-favorite-btn" class="favorite-add-btn" type="button">Favoriye Ekle</button>
+                        <button id="search-submit-btn" type="submit">{{ ui_texts.search }}</button>
+                        <button id="add-favorite-btn" class="favorite-add-btn" type="button">{{ ui_texts.add_favorite }}</button>
                         <div id="search-loading" class="search-loading hidden" aria-live="polite">
                             <span class="spinner-ring" aria-hidden="true"></span>
-                            <span>Araniyor...</span>
+                            <span>{{ ui_texts.searching }}</span>
                         </div>
                     </div>
                 </form>
 
                 <div class="favorites-panel">
                     <div class="favorites-header">
-                        <div class="favorites-title">Favori Sehirlerim</div>
-                        <button id="clear-favorites-btn" class="favorites-clear" type="button">Tumunu Temizle</button>
+                        <div class="favorites-title">{{ ui_texts.favorites_title }}</div>
+                        <button id="clear-favorites-btn" class="favorites-clear" type="button">{{ ui_texts.clear_all }}</button>
                     </div>
                     <div id="favorites-list" class="favorites-list"></div>
                 </div>
@@ -672,24 +676,24 @@
                     <h2>{{ weather.location_text }}</h2>
                     {% if day_summary %}
                     <div class="summary-box">
-                        <div class="summary-title">Gunun Ozeti</div>
+                        <div class="summary-title">{{ ui_texts.summary_title }}</div>
                         <div class="summary-text">{{ day_summary }}</div>
                     </div>
                     {% endif %}
                     <img src="{{ url_for('static', filename=(weather.icon_name ~ '.gif')) }}" alt="Weather icon" width="80" height="80">
-                    <p>Sicaklik: {{ weather.temperature }} C</p>
+                    <p>{{ ui_texts.temperature }}: {{ weather.temperature }} C</p>
                     {% if weather.felt_temperature is not none %}
-                    <p>Hissedilen: {{ weather.felt_temperature }} C</p>
+                    <p>{{ ui_texts.feels_like }}: {{ weather.felt_temperature }} C</p>
                     {% endif %}
-                    <p>Nem: {{ weather.humidity }} %</p>
-                    <p>Ruzgar: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>
-                    <p>Durum: {{ weather.description }}</p>
+                    <p>{{ ui_texts.humidity }}: {{ weather.humidity }} %</p>
+                    <p>{{ ui_texts.wind }}: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>
+                    <p>{{ ui_texts.status }}: {{ weather.description }}</p>
                 </div>
                 {% endif %}
 
                 {% if hourly %}
                 <div>
-                    <h3>Saatlik Tahmin (24 Saat)</h3>
+                    <h3>{{ ui_texts.hourly_title }}</h3>
                     <div class="hourly-scroll">
                         {% for item in hourly %}
                         <div class="hourly-item">
@@ -708,14 +712,14 @@
 
                 {% if forecast %}
                 <div>
-                    <h3>5 Gunluk Tahmin</h3>
+                    <h3>{{ ui_texts.daily_title }}</h3>
                     <div class="forecast-grid">
                         {% for item in forecast %}
                         <div class="forecast-item">
                             <strong>{{ item.day_name }}</strong><br>
                             <img src="{{ url_for('static', filename=(item.icon_name ~ '.gif')) }}" alt="Forecast icon" width="44" height="44"><br>
                             {{ item.max_temp }}C / {{ item.min_temp }}C<br>
-                            {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>Yagis: {{ item.precipitation_sum_mm }} mm{% endif %}{% if item.snowfall_sum_cm is not none and item.snowfall_sum_cm > 0 %}<br>Kar: {{ item.snowfall_sum_cm }} cm{% endif %}
+                            {{ item.description }}{% if item.precipitation_sum_mm is not none %}<br>{{ ui_texts.precip }}: {{ item.precipitation_sum_mm }} mm{% endif %}{% if item.snowfall_sum_cm is not none and item.snowfall_sum_cm > 0 %}<br>{{ ui_texts.snow }}: {{ item.snowfall_sum_cm }} cm{% endif %}
                         </div>
                         {% endfor %}
                     </div>
@@ -787,6 +791,7 @@
         const form = document.getElementById("weather-form");
         const searchSubmitBtn = document.getElementById("search-submit-btn");
         const searchLoading = document.getElementById("search-loading");
+        const langSelect = document.getElementById("lang-select");
         const addFavoriteBtn = document.getElementById("add-favorite-btn");
         const clearFavoritesBtn = document.getElementById("clear-favorites-btn");
         const favoritesList = document.getElementById("favorites-list");
@@ -814,6 +819,10 @@
         const FAVORITES_KEY = "gokyra_favorite_cities";
         const UI_PREFS_KEY = "gokyra_ui_prefs";
         const DRAWER_ITEMS_KEY = "gokyra_drawer_items";
+        const CURRENT_LANG = {{ lang|tojson }};
+        const TEXT_SEARCH = {{ ui_texts.search|tojson }};
+        const TEXT_SEARCHING = {{ ui_texts.searching|tojson }};
+        const TEXT_NO_FAVORITES = {{ ui_texts.no_favorites|tojson }};
 
         let activeRequestId = 0;
 
@@ -854,7 +863,7 @@
             if (!favorites.length) {
                 const empty = document.createElement("div");
                 empty.className = "favorites-empty";
-                empty.textContent = "Henuz favori sehir yok.";
+                empty.textContent = TEXT_NO_FAVORITES;
                 favoritesList.appendChild(empty);
                 return;
             }
@@ -865,7 +874,7 @@
                 chip.className = "favorite-chip";
                 chip.textContent = cityName;
                 chip.addEventListener("click", () => {
-                    window.location.href = `/?city=${encodeURIComponent(cityName)}`;
+                    window.location.href = `/?city=${encodeURIComponent(cityName)}&lang=${encodeURIComponent(CURRENT_LANG)}`;
                 });
                 favoritesList.appendChild(chip);
             });
@@ -892,13 +901,13 @@
             if (active) {
                 searchLoading.classList.remove("hidden");
                 searchSubmitBtn.disabled = true;
-                searchSubmitBtn.textContent = "Araniyor";
+                searchSubmitBtn.textContent = TEXT_SEARCHING;
                 return;
             }
 
             searchLoading.classList.add("hidden");
             searchSubmitBtn.disabled = false;
-            searchSubmitBtn.textContent = "Sorgula";
+            searchSubmitBtn.textContent = TEXT_SEARCH;
         }
 
         function hideSuggestions() {
@@ -1195,6 +1204,10 @@
 
         addFavoriteBtn.addEventListener("click", () => {
             addFavoriteCity(cityInput.value);
+        });
+
+        langSelect.addEventListener("change", () => {
+            form.requestSubmit();
         });
 
         form.addEventListener("submit", () => {

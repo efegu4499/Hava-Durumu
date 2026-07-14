@@ -16,6 +16,9 @@ class WeatherAppTests(unittest.TestCase):
     def test_clear_sky_code_maps_to_turkish_label(self):
         self.assertEqual(get_weather_description(0), "Açık")
 
+    def test_clear_sky_code_maps_to_english_label(self):
+        self.assertEqual(get_weather_description(0, lang="en"), "Clear")
+
     def test_clear_sky_icon_maps_to_sun(self):
         self.assertEqual(get_icon_name_for_code(0), "sun")
 
@@ -44,6 +47,12 @@ class WeatherAppTests(unittest.TestCase):
         self.assertEqual(
             get_thunder_rain_description(2),
             "Gök Gürültülü Hafif Yağmur",
+        )
+
+    def test_thunder_prefix_for_light_rain_description_in_english(self):
+        self.assertEqual(
+            get_thunder_rain_description(2, lang="en"),
+            "Thunder Light Rain",
         )
 
     def test_hourly_light_snow_maps_to_single_flake_icon(self):

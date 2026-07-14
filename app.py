@@ -26,9 +26,56 @@ def get_background_theme(weather_code):
     return "cloudy"
 
 
-def build_daily_summary(weather, forecast, hourly):
+def get_ui_texts(lang):
+    if lang == "en":
+        return {
+            "title": "Gokyra Weather",
+            "city_placeholder": "Enter district or city name",
+            "search": "Search",
+            "add_favorite": "Add Favorite",
+            "favorites_title": "My Favorite Cities",
+            "clear_all": "Clear All",
+            "summary_title": "Daily Summary",
+            "temperature": "Temperature",
+            "feels_like": "Feels Like",
+            "humidity": "Humidity",
+            "wind": "Wind",
+            "status": "Status",
+            "hourly_title": "Hourly Forecast (24 Hours)",
+            "daily_title": "5-Day Forecast",
+            "precip": "Precip",
+            "snow": "Snow",
+            "no_favorites": "No favorite cities yet.",
+            "searching": "Searching...",
+        }
+
+    return {
+        "title": "Gokyra Weather",
+        "city_placeholder": "Ilce veya il adi girin",
+        "search": "Sorgula",
+        "add_favorite": "Favoriye Ekle",
+        "favorites_title": "Favori Sehirlerim",
+        "clear_all": "Tumunu Temizle",
+        "summary_title": "Gunun Ozeti",
+        "temperature": "Sicaklik",
+        "feels_like": "Hissedilen",
+        "humidity": "Nem",
+        "wind": "Ruzgar",
+        "status": "Durum",
+        "hourly_title": "Saatlik Tahmin (24 Saat)",
+        "daily_title": "5 Gunluk Tahmin",
+        "precip": "Yagis",
+        "snow": "Kar",
+        "no_favorites": "Henuz favori sehir yok.",
+        "searching": "Araniyor...",
+    }
+
+
+def build_daily_summary(weather, forecast, hourly, lang="tr"):
     if not weather:
         return None
+
+    is_en = lang == "en"
 
     parts = []
     snow_warning_needed = False
@@ -37,9 +84,15 @@ def build_daily_summary(weather, forecast, hourly):
     desc = weather.get("description")
     if temp is not None and desc:
         if felt_temp is not None:
-            parts.append(f"Su an {temp}°C, hissedilen {felt_temp}°C ve {desc.lower()}.")
+            if is_en:
+                parts.append(f"Now {temp}°C, feels like {felt_temp}°C and {desc.lower()}.")
+            else:
+                parts.append(f"Su an {temp}°C, hissedilen {felt_temp}°C ve {desc.lower()}.")
         else:
-            parts.append(f"Su an {temp}°C ve {desc.lower()}.")
+            if is_en:
+                parts.append(f"Now {temp}°C and {desc.lower()}.")
+            else:
+                parts.append(f"Su an {temp}°C ve {desc.lower()}.")
 
     current_temp = weather.get("temperature")
     today_min_temp = None
@@ -50,17 +103,23 @@ def build_daily_summary(weather, forecast, hourly):
         min_temp = today.get("min_temp")
         today_min_temp = min_temp
         if max_temp is not None and min_temp is not None:
-            parts.append(f"Bugün {max_temp}° / {min_temp}° aralığında.")
+            if is_en:
+                parts.append(f"Today between {max_temp}° / {min_temp}°.")
+            else:
+                parts.append(f"Bugün {max_temp}° / {min_temp}° aralığında.")
 
         rain_mm = today.get("precipitation_sum_mm")
         snow_cm = today.get("snowfall_sum_cm")
         if rain_mm is not None:
             if rain_mm > 0:
-                parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
+                if is_en:
+                    parts.append(f"Expected daily precipitation: {rain_mm} mm.")
+                else:
+                    parts.append(f"Günlük yağış beklentisi {rain_mm} mm.")
                 if rain_mm > 50:
-                    parts.append("Sel ve taşkın ihtimaline dikkat.")
+                    parts.append("Watch for flood risk." if is_en else "Sel ve taşkın ihtimaline dikkat.")
             else:
-                parts.append("Bugün yağış beklenmiyor.")
+                parts.append("No precipitation expected today." if is_en else "Bugün yağış beklenmiyor.")
         # Only mention "no snow" when temperatures are realistically close to snow conditions.
         cold_enough_for_snow = (
             (current_temp is not None and current_temp <= 5)
@@ -69,20 +128,26 @@ def build_daily_summary(weather, forecast, hourly):
 
         if snow_cm is not None:
             if snow_cm > 0:
-                parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
+                if is_en:
+                    parts.append(f"Expected daily snowfall: {snow_cm} cm.")
+                else:
+                    parts.append(f"Günlük kar beklentisi {snow_cm} cm.")
                 if snow_cm >= 20:
                     snow_warning_needed = True
             elif cold_enough_for_snow:
-                parts.append("Bugün kar yağışı beklenmiyor.")
+                parts.append("No snow expected today." if is_en else "Bugün kar yağışı beklenmiyor.")
 
     if hourly:
         next_hours = hourly[:6]
         peak_rain = max((item.get("precipitation_mm") or 0) for item in next_hours) if next_hours else 0
         peak_snow = max((item.get("snowfall_cm") or 0) for item in next_hours) if next_hours else 0
         if peak_rain > 0:
-            parts.append(f"Önümüzdeki saatlerde en yüksek saatlik yağış {peak_rain} mm.")
+            if is_en:
+                parts.append(f"Peak hourly precipitation in the next hours: {peak_rain} mm.")
+            else:
+                parts.append(f"Önümüzdeki saatlerde en yüksek saatlik yağış {peak_rain} mm.")
         else:
-            parts.append("Önümüzdeki saatlerde yağış beklenmiyor.")
+            parts.append("No precipitation expected in the next hours." if is_en else "Önümüzdeki saatlerde yağış beklenmiyor.")
         next_hours_min_temp = min((item.get("temperature") for item in next_hours if item.get("temperature") is not None), default=None)
         cold_next_hours = (
             (next_hours_min_temp is not None and next_hours_min_temp <= 3)
@@ -90,23 +155,33 @@ def build_daily_summary(weather, forecast, hourly):
         )
 
         if peak_snow > 0:
-            parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
+            if is_en:
+                parts.append(f"Peak hourly snowfall in the next hours: {peak_snow} cm.")
+            else:
+                parts.append(f"Önümüzdeki saatlerde en yüksek saatlik kar {peak_snow} cm.")
         elif cold_next_hours:
-            parts.append("Önümüzdeki saatlerde kar beklenmiyor.")
+            parts.append("No snow expected in the next hours." if is_en else "Önümüzdeki saatlerde kar beklenmiyor.")
 
     wind_speed = weather.get("wind_speed")
     wind_direction = weather.get("wind_direction_text")
     if wind_speed is not None:
         if wind_direction:
-            parts.append(f"Rüzgar {wind_speed} km/s, {wind_direction.lower()} yönünde.")
+            if is_en:
+                parts.append(f"Wind {wind_speed} km/h from {wind_direction.lower()}.")
+            else:
+                parts.append(f"Rüzgar {wind_speed} km/s, {wind_direction.lower()} yönünde.")
         else:
-            parts.append(f"Rüzgar hızı {wind_speed} km/s.")
+            parts.append(f"Wind speed {wind_speed} km/h." if is_en else f"Rüzgar hızı {wind_speed} km/s.")
 
     if snow_warning_needed:
-        parts.append("Yollar kapanabilir, kar lastiği ve zincir takınız mutlaka.")
+        parts.append(
+            "Roads may close; winter tires and chains are strongly recommended."
+            if is_en
+            else "Yollar kapanabilir, kar lastiği ve zincir takınız mutlaka."
+        )
 
     if not parts:
-        return "Bugünün özeti için veri hazırlanıyor."
+        return "Summary is being prepared." if is_en else "Bugünün özeti için veri hazırlanıyor."
     return " ".join(parts)
 
 
@@ -142,10 +217,14 @@ def locations():
 @app.route("/", methods=["GET", "POST"])
 def index():
     city = request.form.get("city") or request.args.get("city") or "Istanbul"
+    lang = (request.form.get("lang") or request.args.get("lang") or "tr").strip().lower()
+    if lang not in {"tr", "en"}:
+        lang = "tr"
+    ui_texts = get_ui_texts(lang)
 
     try:
         weather = get_current_weather(city)
-        forecast_data = get_forecast_weather(city, days=5)
+        forecast_data = get_forecast_weather(city, days=5, lang=lang)
         forecast = forecast_data.get("forecast", [])
         city_norm = _normalize_text(weather["city"])
         seen_norms = {city_norm}
@@ -161,9 +240,9 @@ def index():
             location_parts.append(weather["country"])
 
         weather["location_text"] = ", ".join(location_parts)
-        weather["description"] = get_weather_description(weather["weather_code"])
-        hourly = get_hourly_weather(city, hours=24)
-        day_summary = build_daily_summary(weather, forecast, hourly)
+        weather["description"] = get_weather_description(weather["weather_code"], lang=lang)
+        hourly = get_hourly_weather(city, hours=24, lang=lang)
+        day_summary = build_daily_summary(weather, forecast, hourly, lang=lang)
         weather_theme = get_background_theme(weather.get("weather_code"))
     except Exception as exc:
         weather = None
@@ -183,6 +262,8 @@ def index():
         hourly=hourly,
         day_summary=day_summary,
         weather_theme=weather_theme,
+        lang=lang,
+        ui_texts=ui_texts,
         error=error,
     )
 
