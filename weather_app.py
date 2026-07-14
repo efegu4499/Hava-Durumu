@@ -1,6 +1,7 @@
 import json
 import time
 import unicodedata
+from copy import deepcopy
 from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -8,6 +9,8 @@ from urllib.request import Request, urlopen
 
 _JSON_CACHE = {}
 _JSON_CACHE_TTL_SECONDS = 120
+_BUNDLE_CACHE = {}
+_BUNDLE_CACHE_TTL_SECONDS = 90
 
 WEATHER_CODES_TR = {
     0: "Açık",
@@ -544,6 +547,12 @@ def suggest_locations(query_text, limit=12):
 
 
 def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
+    cache_key = f"{_normalize_text(city_name)}|{hours}|{days}|{lang}"
+    cached_bundle = _BUNDLE_CACHE.get(cache_key)
+    now = time.time()
+    if cached_bundle and (now - cached_bundle[0]) < _BUNDLE_CACHE_TTL_SECONDS:
+        return deepcopy(cached_bundle[1])
+
     city = search_city(city_name)
     raw = _metno_forecast(city["latitude"], city["longitude"])
     timeseries = ((raw.get("properties") or {}).get("timeseries") or [])
@@ -688,19 +697,21 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
             }
         )
 
-    return {"weather": weather, "hourly": hourly_result, "forecast": forecast}
+    bundle = {"weather": weather, "hourly": hourly_result, "forecast": forecast}
+    _BUNDLE_CACHE[cache_key] = (time.time(), bundle)
+    return deepcopy(bundle)
 
 
 def get_current_weather(city_name):
-    return get_weather_bundle(city_name, hours=24, days=5, lang="tr").get("weather", {})
+    return get_weather_bundle(city_name, hours=1, days=1, lang="tr").get("weather", {})
 
 
 def get_hourly_weather(city_name, hours=24, lang="tr"):
-    return get_weather_bundle(city_name, hours=hours, days=5, lang=lang).get("hourly", [])
+    return get_weather_bundle(city_name, hours=hours, days=1, lang=lang).get("hourly", [])
 
 
 def get_forecast_weather(city_name, days=5, lang="tr"):
-    bundle = get_weather_bundle(city_name, hours=24, days=days, lang=lang)
+    bundle = get_weather_bundle(city_name, hours=1, days=days, lang=lang)
     weather = bundle.get("weather") or {}
     return {
         "city": weather.get("city"),
