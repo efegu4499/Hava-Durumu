@@ -2,8 +2,10 @@ import unittest
 from unittest.mock import patch
 
 from weather_app import (
+    _compute_apparent_temperature_c,
     _get_weatherstack_api_key,
     _select_felt_temperature,
+    _select_felt_temperature_with_source,
     _weatherstack_feels_like_temperature,
     calculate_feels_like_c,
     format_forecast_entry,
@@ -91,6 +93,10 @@ class WeatherAppTests(unittest.TestCase):
         feels_like = calculate_feels_like_c(2, humidity_percent=60, wind_speed_ms=8)
         self.assertLess(feels_like, 2)
 
+    def test_apparent_temperature_formula_returns_value(self):
+        value = _compute_apparent_temperature_c(28, humidity_percent=70, wind_speed_ms=3)
+        self.assertIsNotNone(value)
+
     @patch("weather_app.os.getenv", return_value="demo-key")
     @patch("weather_app._get_json")
     def test_weatherstack_feels_like_temperature_parses_value(self, mock_get_json, _mock_getenv):
@@ -124,6 +130,11 @@ class WeatherAppTests(unittest.TestCase):
     def test_select_felt_temperature_keeps_api_when_meaningfully_different(self):
         value = _select_felt_temperature(22, 55, 3, 25.2)
         self.assertEqual(value, 25.2)
+
+    def test_select_felt_temperature_with_source_reports_weatherstack(self):
+        value, source = _select_felt_temperature_with_source(22, 55, 3, 25.2)
+        self.assertEqual(value, 25.2)
+        self.assertEqual(source, "weatherstack")
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

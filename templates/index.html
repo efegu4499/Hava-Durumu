@@ -698,6 +698,9 @@
                     <p>{{ ui_texts.temperature }}: {{ weather.temperature }} C</p>
                     {% if weather.felt_temperature is not none %}
                     <p>{{ ui_texts.feels_like }}: {{ weather.felt_temperature }} C</p>
+                    {% if weather.felt_temperature_source %}
+                    <p>{{ ui_texts.feels_like_source }}: {{ weather.felt_temperature_source }}</p>
+                    {% endif %}
                     {% endif %}
                     <p>{{ ui_texts.humidity }}: {{ weather.humidity }} %</p>
                     <p>{{ ui_texts.wind }}: {{ weather.wind_speed }} km/s{% if weather.wind_direction_arrow %}, {{ weather.wind_direction_arrow }}{% endif %}{% if weather.wind_direction_text %} {{ weather.wind_direction_text }}{% endif %}</p>

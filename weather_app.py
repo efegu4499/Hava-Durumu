@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import time
 import unicodedata
@@ -171,6 +172,19 @@ def calculate_feels_like_c(temp_c, humidity_percent=None, wind_speed_ms=None):
             return round(wc, 1)
 
     return round(temp, 1)
+
+
+def _compute_apparent_temperature_c(temp_c, humidity_percent=None, wind_speed_ms=None):
+    temp = _to_float(temp_c)
+    humidity = _to_float(humidity_percent)
+    wind_ms = _to_float(wind_speed_ms)
+    if temp is None or humidity is None or wind_ms is None:
+        return None
+
+    # Australian Bureau of Meteorology apparent temperature (C).
+    vapor_pressure = (humidity / 100.0) * 6.105 * math.exp((17.27 * temp) / (237.7 + temp))
+    apparent = temp + 0.33 * vapor_pressure - 0.70 * wind_ms - 4.0
+    return round(apparent, 1)
 
 
 def get_rain_intensity_style(mm_amount, period="hourly", lang="tr"):
@@ -566,24 +580,40 @@ def _weatherstack_feels_like_temperature(lat, lon):
 
 
 def _select_felt_temperature(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
+    value, _ = _select_felt_temperature_with_source(
+        temp_c,
+        humidity_percent,
+        wind_speed_ms,
+        api_apparent_temp,
+    )
+    return value
+
+
+def _select_felt_temperature_with_source(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
     temp = _to_float(temp_c)
     api_value = _to_float(api_apparent_temp)
-    computed = calculate_feels_like_c(
+    computed = _compute_apparent_temperature_c(
         temp,
         humidity_percent=humidity_percent,
         wind_speed_ms=wind_speed_ms,
     )
+    if computed is None:
+        computed = calculate_feels_like_c(
+            temp,
+            humidity_percent=humidity_percent,
+            wind_speed_ms=wind_speed_ms,
+        )
 
     if api_value is None:
-        return computed
+        return computed, "calculated"
 
     # If upstream apparent value matches air temperature too closely,
     # prefer computed value when it captures wind/humidity impact.
     if temp is not None and abs(api_value - temp) < 0.05:
         if computed is not None and abs(computed - temp) >= 0.1:
-            return computed
+            return computed, "calculated"
 
-    return round(api_value, 1)
+    return round(api_value, 1), "weatherstack"
 
 
 def search_city(city_name):
@@ -670,7 +700,7 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
     current_temp = _to_float(current_instant.get("air_temperature"))
     current_humidity = _to_float(current_instant.get("relative_humidity"))
     current_wind_ms = _to_float(current_instant.get("wind_speed"))
-    apparent_temp = _select_felt_temperature(
+    apparent_temp, felt_source = _select_felt_temperature_with_source(
         current_temp,
         current_humidity,
         current_wind_ms,
@@ -684,6 +714,7 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
         "country": city["country"],
         "temperature": current_temp,
         "felt_temperature": apparent_temp,
+        "felt_temperature_source": felt_source,
         "humidity": current_humidity,
         "wind_speed": current_wind_ms,
         "wind_direction": wind_dir,
