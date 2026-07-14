@@ -1,13 +1,19 @@
 {
+  "id": "/?source=pwa",
   "name": "Gokyra Weather",
   "short_name": "Gokyra",
   "description": "Turkiye icin saatlik ve 5 gunluk hava durumu.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
   "background_color": "#f3f4f6",
   "theme_color": "#2563eb",
   "lang": "tr",
+  "dir": "ltr",
+  "categories": ["weather", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
@@ -32,6 +38,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kayak Merkezleri",
+      "short_name": "Kayak",
+      "description": "Kayak merkezlerinde kar birikimi",
+      "url": "/kayak-merkezleri?lang=tr"
+    },
+    {
+      "name": "Turkiye Haritasi",
+      "short_name": "Harita",
+      "description": "Ile tiklayarak hava durumunu gor",
+      "url": "/turkiye-haritasi?lang=tr"
     }
   ]
 }

@@ -1,8 +1,12 @@
-const CACHE_NAME = "gokyra-weather-v2";
+const CACHE_NAME = "gokyra-weather-v3";
 const ASSETS_TO_CACHE = [
+  "/",
+  "/?source=pwa",
   "/manifest.webmanifest",
   "/static/icons/icon-192.png",
-  "/static/icons/icon-512.png"
+  "/static/icons/icon-512.png",
+  "/static/icons/icon-192-maskable.png",
+  "/static/icons/icon-512-maskable.png"
 ];
 
 self.addEventListener("install", (event) => {
