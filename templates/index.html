@@ -255,6 +255,18 @@
             flex-wrap: wrap;
         }
 
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 14px;
+            border-radius: 12px;
+            background: #255f87;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
         button {
             padding: 11px 14px;
             border: 0;
@@ -652,6 +664,7 @@
                     <div class="button-row">
                         <button id="search-submit-btn" type="submit">{{ ui_texts.search }}</button>
                         <button id="add-favorite-btn" class="favorite-add-btn" type="button">{{ ui_texts.add_favorite }}</button>
+                        <a class="button-link" href="/kayak-merkezleri?lang={{ lang }}">{{ ui_texts.ski_tab }}</a>
                         <div id="search-loading" class="search-loading hidden" aria-live="polite">
                             <span class="spinner-ring" aria-hidden="true"></span>
                             <span>{{ ui_texts.searching }}</span>

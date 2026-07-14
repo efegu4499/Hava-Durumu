@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ski_texts.title }}</title>
+    <style>
+        :root {
+            --bg: linear-gradient(140deg, #e8f6ff 0%, #f3fbff 55%, #ffffff 100%);
+            --ink: #14354d;
+            --panel: #ffffff;
+            --line: #d7e6f1;
+            --primary: #0f7f95;
+            --shadow: 0 14px 38px rgba(19, 49, 73, 0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+            padding: 20px;
+        }
+
+        .wrap {
+            width: min(1100px, 96vw);
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            padding: 22px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.2rem, 2.2vw, 2rem);
+        }
+
+        .subtitle {
+            margin: 0 0 16px;
+            color: #3d637e;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: var(--primary);
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn.secondary {
+            background: #2d5f84;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            background: #fafdff;
+        }
+
+        .name {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 0 0 2px;
+            color: #124061;
+        }
+
+        .region {
+            margin: 0 0 10px;
+            color: #5a7890;
+            font-size: 13px;
+        }
+
+        .depth {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0c556d;
+            margin-bottom: 8px;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: #5a7890;
+            margin-bottom: 10px;
+        }
+
+        .card a {
+            color: #0e5c89;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .card a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <div class="topbar">
+            <h1>{{ ski_texts.title }}</h1>
+            <div class="actions">
+                <a class="btn secondary" href="/?lang={{ lang }}">{{ ski_texts.back }}</a>
+                {% if lang == 'tr' %}
+                <a class="btn" href="/kayak-merkezleri?lang=en">English</a>
+                {% else %}
+                <a class="btn" href="/kayak-merkezleri?lang=tr">Turkce</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <p class="subtitle">{{ ski_texts.subtitle }}</p>
+
+        <section class="grid">
+            {% for item in resorts %}
+            <article class="card">
+                <h2 class="name">{{ item.name }}</h2>
+                <p class="region">{{ item.region }}</p>
+                <div class="depth">
+                    {{ ski_texts.depth }}:
+                    {% if item.snow_depth_cm is not none %}
+                        {{ item.snow_depth_cm }} cm
+                    {% else %}
+                        {{ ski_texts.unavailable }}
+                    {% endif %}
+                </div>
+                <div class="meta">
+                    {{ ski_texts.updated }}:
+                    {% if item.updated_at %}
+                        {{ item.updated_at }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </div>
+                <a href="{{ item.report_url }}" target="_blank" rel="noopener noreferrer">{{ ski_texts.open_report }}</a>
+            </article>
+            {% endfor %}
+        </section>
+    </main>
+</body>
+</html>

@@ -1,4 +1,7 @@
 import os
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+import json
 from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
 
 from weather_app import (
@@ -12,6 +15,45 @@ from weather_app import (
 
 app = Flask(__name__)
 app.static_folder = os.path.join(os.path.dirname(__file__), "assets")
+
+
+SKI_RESORTS = [
+    {
+        "name": "Uludag",
+        "region": "Bursa",
+        "latitude": 40.0928,
+        "longitude": 29.2216,
+        "report_url": "https://www.snow-forecast.com/resorts/Uludag",
+    },
+    {
+        "name": "Erciyes",
+        "region": "Kayseri",
+        "latitude": 38.5311,
+        "longitude": 35.4487,
+        "report_url": "https://www.snow-forecast.com/resorts/Erciyes",
+    },
+    {
+        "name": "Palandoken",
+        "region": "Erzurum",
+        "latitude": 39.8555,
+        "longitude": 41.2743,
+        "report_url": "https://www.snow-forecast.com/resorts/Palandoken",
+    },
+    {
+        "name": "Kartalkaya",
+        "region": "Bolu",
+        "latitude": 40.5966,
+        "longitude": 31.7298,
+        "report_url": "https://www.snow-forecast.com/resorts/Kartalkaya",
+    },
+    {
+        "name": "Sarikamis",
+        "region": "Kars",
+        "latitude": 40.3521,
+        "longitude": 42.5984,
+        "report_url": "https://www.snow-forecast.com/resorts/Sarikamis",
+    },
+]
 
 
 def get_background_theme(weather_code):
@@ -47,6 +89,7 @@ def get_ui_texts(lang):
             "snow": "Snow",
             "no_favorites": "No favorite cities yet.",
             "searching": "Searching...",
+            "ski_tab": "Ski Snow",
         }
 
     return {
@@ -68,7 +111,74 @@ def get_ui_texts(lang):
         "snow": "Kar",
         "no_favorites": "Henuz favori sehir yok.",
         "searching": "Araniyor...",
+        "ski_tab": "Kayak Karlari",
     }
+
+
+def get_ski_texts(lang):
+    if lang == "en":
+        return {
+            "title": "Ski Resort Snow Depth",
+            "subtitle": "Current modeled snow depth and live report links for major resorts.",
+            "depth": "Current Snow Depth",
+            "updated": "Updated",
+            "open_report": "Open Snow Report",
+            "back": "Back To Weather",
+            "unavailable": "Data unavailable",
+        }
+
+    return {
+        "title": "Kayak Merkezleri Kar Birikimi",
+        "subtitle": "Buyuk merkezler icin anlik model kar birikimi ve canli rapor baglantisi.",
+        "depth": "Guncel Kar Birikimi",
+        "updated": "Guncellendi",
+        "open_report": "Kar Raporunu Ac",
+        "back": "Hava Durumuna Don",
+        "unavailable": "Veri alinamadi",
+    }
+
+
+def _fetch_open_meteo_current(lat, lon):
+    query = urlencode(
+        {
+            "latitude": lat,
+            "longitude": lon,
+            "current": "snow_depth,temperature_2m",
+            "timezone": "auto",
+            "models": "ecmwf_ifs025",
+        }
+    )
+    url = f"https://api.open-meteo.com/v1/forecast?{query}"
+    request = Request(url, headers={"User-Agent": "weather-app/1.0"})
+    with urlopen(request, timeout=10) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def get_ski_resorts_snow_data(lang="tr"):
+    items = []
+    for resort in SKI_RESORTS:
+        snow_depth_cm = None
+        updated_at = None
+        try:
+            data = _fetch_open_meteo_current(resort["latitude"], resort["longitude"])
+            current = data.get("current") or {}
+            depth_m = current.get("snow_depth")
+            if depth_m is not None:
+                snow_depth_cm = round(float(depth_m) * 100, 1)
+            updated_at = current.get("time")
+        except Exception:
+            snow_depth_cm = None
+
+        items.append(
+            {
+                "name": resort["name"],
+                "region": resort["region"],
+                "snow_depth_cm": snow_depth_cm,
+                "updated_at": updated_at,
+                "report_url": resort["report_url"],
+            }
+        )
+    return items
 
 
 def build_daily_summary(weather, forecast, hourly, lang="tr"):
@@ -265,6 +375,21 @@ def index():
         lang=lang,
         ui_texts=ui_texts,
         error=error,
+    )
+
+
+@app.route("/kayak-merkezleri", methods=["GET"])
+def ski_resorts():
+    lang = (request.args.get("lang") or "tr").strip().lower()
+    if lang not in {"tr", "en"}:
+        lang = "tr"
+
+    return render_template(
+        "ski_resorts.html",
+        lang=lang,
+        ui_texts=get_ui_texts(lang),
+        ski_texts=get_ski_texts(lang),
+        resorts=get_ski_resorts_snow_data(lang=lang),
     )
 
 
