@@ -523,6 +523,26 @@ def _metno_forecast(lat, lon):
     return _get_json(url)
 
 
+def _open_meteo_apparent_temperature(lat, lon):
+    query = urlencode(
+        {
+            "latitude": lat,
+            "longitude": lon,
+            "current": "apparent_temperature",
+            "timezone": "auto",
+            "models": "ecmwf_ifs025",
+        }
+    )
+    url = f"https://api.open-meteo.com/v1/forecast?{query}"
+    try:
+        data = _get_json(url)
+    except Exception:
+        return None
+
+    current = (data or {}).get("current") or {}
+    return _to_float(current.get("apparent_temperature"))
+
+
 def search_city(city_name):
     city_query, location_hint = _split_city_hint(city_name)
     preferred_country_code = _resolve_country_hint(location_hint)
@@ -607,6 +627,13 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
     current_temp = _to_float(current_instant.get("air_temperature"))
     current_humidity = _to_float(current_instant.get("relative_humidity"))
     current_wind_ms = _to_float(current_instant.get("wind_speed"))
+    apparent_temp = _open_meteo_apparent_temperature(city["latitude"], city["longitude"])
+    if apparent_temp is None:
+        apparent_temp = calculate_feels_like_c(
+            current_temp,
+            humidity_percent=current_humidity,
+            wind_speed_ms=current_wind_ms,
+        )
 
     weather = {
         "city": city["name"],
@@ -614,11 +641,7 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
         "admin2": city.get("admin2"),
         "country": city["country"],
         "temperature": current_temp,
-        "felt_temperature": calculate_feels_like_c(
-            current_temp,
-            humidity_percent=current_humidity,
-            wind_speed_ms=current_wind_ms,
-        ),
+        "felt_temperature": apparent_temp,
         "humidity": current_humidity,
         "wind_speed": current_wind_ms,
         "wind_direction": wind_dir,

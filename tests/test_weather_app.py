@@ -1,6 +1,8 @@
 import unittest
+from unittest.mock import patch
 
 from weather_app import (
+    _open_meteo_apparent_temperature,
     calculate_feels_like_c,
     format_forecast_entry,
     get_icon_name_for_code,
@@ -86,6 +88,16 @@ class WeatherAppTests(unittest.TestCase):
     def test_feels_like_lower_in_cold_windy_conditions(self):
         feels_like = calculate_feels_like_c(2, humidity_percent=60, wind_speed_ms=8)
         self.assertLess(feels_like, 2)
+
+    @patch("weather_app._get_json")
+    def test_open_meteo_apparent_temperature_parses_value(self, mock_get_json):
+        mock_get_json.return_value = {"current": {"apparent_temperature": 14.6}}
+        self.assertEqual(_open_meteo_apparent_temperature(41.0, 29.0), 14.6)
+
+    @patch("weather_app._get_json")
+    def test_open_meteo_apparent_temperature_fallbacks_on_error(self, mock_get_json):
+        mock_get_json.side_effect = RuntimeError("network")
+        self.assertIsNone(_open_meteo_apparent_temperature(41.0, 29.0))
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [
