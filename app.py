@@ -6,10 +6,8 @@ from flask import Flask, jsonify, render_template, request, send_file, send_from
 
 from weather_app import (
     _normalize_text,
-    get_current_weather,
-    get_forecast_weather,
-    get_hourly_weather,
     get_weather_description,
+    get_weather_bundle,
     suggest_locations,
 )
 
@@ -457,9 +455,10 @@ def index():
     ui_texts = get_ui_texts(lang)
 
     try:
-        weather = get_current_weather(city)
-        forecast_data = get_forecast_weather(city, days=5, lang=lang)
-        forecast = forecast_data.get("forecast", [])
+        bundle = get_weather_bundle(city, hours=24, days=5, lang=lang)
+        weather = bundle.get("weather") or {}
+        forecast = bundle.get("forecast", [])
+        hourly = bundle.get("hourly", [])
         city_norm = _normalize_text(weather["city"])
         seen_norms = {city_norm}
         location_parts = [weather["city"]]
@@ -475,7 +474,6 @@ def index():
 
         weather["location_text"] = ", ".join(location_parts)
         weather["description"] = get_weather_description(weather["weather_code"], lang=lang)
-        hourly = get_hourly_weather(city, hours=24, lang=lang)
         day_summary = build_daily_summary(weather, forecast, hourly, lang=lang)
         weather_theme = get_background_theme(weather.get("weather_code"))
     except Exception as exc:

@@ -494,6 +494,160 @@ def get_hourly_weather(city_name, hours=24, lang="tr"):
     return result
 
 
+def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
+    city = search_city(city_name)
+    url = (
+        "https://api.open-meteo.com/v1/forecast?"
+        f"latitude={city['latitude']}&longitude={city['longitude']}"
+        "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,wind_direction_10m"
+        "&hourly=temperature_2m,weather_code,wind_speed_10m,precipitation_probability,precipitation,snowfall"
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,snowfall_sum"
+        f"&forecast_hours={hours}"
+        f"&forecast_days={days}"
+        "&timezone=auto&language=tr"
+        "&models=ecmwf_ifs025"
+    )
+    data = _get_json(url)
+
+    current = data.get("current") or {}
+    weather = {
+        "city": city["name"],
+        "admin1": city.get("admin1"),
+        "admin2": city.get("admin2"),
+        "country": city["country"],
+        "temperature": current.get("temperature_2m"),
+        "felt_temperature": current.get("apparent_temperature"),
+        "humidity": current.get("relative_humidity_2m"),
+        "wind_speed": current.get("wind_speed_10m"),
+        "wind_direction": current.get("wind_direction_10m"),
+        "wind_direction_text": get_wind_direction_text(current.get("wind_direction_10m")),
+        "wind_direction_arrow": get_wind_direction_arrow(current.get("wind_direction_10m")),
+        "weather_code": current.get("weather_code"),
+        "icon_name": get_icon_name_for_code(current.get("weather_code")),
+        "description": get_weather_description(current.get("weather_code"), lang=lang),
+    }
+
+    hourly = data.get("hourly") or {}
+    times = hourly.get("time") or []
+    temps = hourly.get("temperature_2m") or []
+    codes = hourly.get("weather_code") or []
+    winds = hourly.get("wind_speed_10m") or []
+    precip = hourly.get("precipitation_probability") or []
+    precip_mm_values = hourly.get("precipitation") or []
+    snow_cm_values = hourly.get("snowfall") or []
+
+    rain_like_codes = {51, 53, 55, 61, 63, 65, 80, 81, 82}
+    snow_like_codes = {71, 73, 75, 77, 85, 86}
+    thunder_like_codes = {95, 96, 99}
+
+    now_str = current.get("time") or ""
+    current_hour = now_str[:13] if now_str else ""
+
+    hourly_result = []
+    started = False
+    for i, t in enumerate(times):
+        if not started:
+            if t[:13] >= current_hour or not current_hour:
+                started = True
+            else:
+                continue
+
+        code = codes[i] if i < len(codes) else 0
+        hour_label = t[11:16] if len(t) >= 16 else t
+        try:
+            hour_int = int(t[11:13]) if len(t) >= 13 else None
+        except ValueError:
+            hour_int = None
+        precip_mm = precip_mm_values[i] if i < len(precip_mm_values) else None
+        snow_cm = snow_cm_values[i] if i < len(snow_cm_values) else None
+        description = get_weather_description(code, lang=lang)
+        icon_name = get_icon_name_for_code(code, hour=hour_int)
+        rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
+            precip_mm, period="hourly", lang=lang
+        )
+        if code in rain_like_codes and rain_intensity_text:
+            description = rain_intensity_text
+            icon_name = rain_intensity_icon or icon_name
+        elif code in thunder_like_codes:
+            description = get_thunder_rain_description(precip_mm, lang=lang)
+            if rain_intensity_icon:
+                icon_name = rain_intensity_icon
+        snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
+            snow_cm, period="hourly", lang=lang
+        )
+        if code in snow_like_codes and snow_intensity_text:
+            description = snow_intensity_text
+            icon_name = snow_intensity_icon or icon_name
+
+        hourly_result.append(
+            {
+                "time": hour_label,
+                "temperature": temps[i] if i < len(temps) else None,
+                "weather_code": code,
+                "description": description,
+                "icon_name": icon_name,
+                "wind_speed": winds[i] if i < len(winds) else None,
+                "precipitation_probability": precip[i] if i < len(precip) else None,
+                "precipitation_mm": precip_mm,
+                "snowfall_cm": snow_cm,
+            }
+        )
+        if len(hourly_result) >= hours:
+            break
+
+    daily = data.get("daily") or {}
+    d_times = daily.get("time") or []
+    d_codes = daily.get("weather_code") or []
+    max_temps = daily.get("temperature_2m_max") or []
+    min_temps = daily.get("temperature_2m_min") or []
+    precip_sum = daily.get("precipitation_sum") or []
+    snow_sum = daily.get("snowfall_sum") or []
+
+    forecast = []
+    for index, date_text in enumerate(d_times):
+        code = d_codes[index] if index < len(d_codes) else 0
+        day_precip_mm = precip_sum[index] if index < len(precip_sum) else None
+        day_snow_cm = snow_sum[index] if index < len(snow_sum) else None
+        description = get_weather_description(code, lang=lang)
+        icon_name = get_icon_name_for_code(code)
+        rain_intensity_text, rain_intensity_icon = get_rain_intensity_style(
+            day_precip_mm, period="daily", lang=lang
+        )
+        if code in rain_like_codes and rain_intensity_text:
+            description = rain_intensity_text
+            icon_name = rain_intensity_icon or icon_name
+        elif code in thunder_like_codes:
+            description = get_thunder_rain_description(day_precip_mm, lang=lang)
+            if rain_intensity_icon:
+                icon_name = rain_intensity_icon
+        snow_intensity_text, snow_intensity_icon = get_snow_intensity_style(
+            day_snow_cm, period="daily", lang=lang
+        )
+        if code in snow_like_codes and snow_intensity_text:
+            description = snow_intensity_text
+            icon_name = snow_intensity_icon or icon_name
+
+        forecast.append(
+            {
+                "date": date_text,
+                "day_name": _get_day_name(date_text),
+                "weather_code": code,
+                "description": description,
+                "max_temp": max_temps[index],
+                "min_temp": min_temps[index],
+                "icon_name": icon_name,
+                "precipitation_sum_mm": day_precip_mm,
+                "snowfall_sum_cm": day_snow_cm,
+            }
+        )
+
+    return {
+        "weather": weather,
+        "hourly": hourly_result,
+        "forecast": forecast,
+    }
+
+
 def get_current_weather(city_name):
     city = search_city(city_name)
     weather_url = (
