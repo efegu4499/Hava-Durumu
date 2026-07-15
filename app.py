@@ -265,17 +265,20 @@ def get_ski_texts(lang):
     }
 
 
-def _fetch_open_meteo_current(lat, lon):
+def _fetch_openweather_current(lat, lon):
+    api_key = (os.getenv("OPENWEATHER_API_KEY") or os.getenv("OPENWEATHER_KEY") or os.getenv("OWM_API_KEY") or "").strip()
+    if not api_key:
+        raise ValueError("OpenWeather API anahtari bulunamadi")
+
     query = urlencode(
         {
-            "latitude": lat,
-            "longitude": lon,
-            "current": "snow_depth,temperature_2m",
-            "timezone": "auto",
-            "models": "ecmwf_ifs025",
+            "lat": lat,
+            "lon": lon,
+            "appid": api_key,
+            "units": "metric",
         }
     )
-    url = f"https://api.open-meteo.com/v1/forecast?{query}"
+    url = f"https://api.openweathermap.org/data/2.5/weather?{query}"
     return _get_json(url)
 
 
@@ -289,12 +292,20 @@ def get_ski_resorts_snow_data(lang="tr"):
         snow_depth_cm = None
         updated_at = None
         try:
-            data = _fetch_open_meteo_current(resort["latitude"], resort["longitude"])
-            current = data.get("current") or {}
-            depth_m = current.get("snow_depth")
-            if depth_m is not None:
-                snow_depth_cm = round(float(depth_m) * 100, 1)
-            updated_at = current.get("time")
+            data = _fetch_openweather_current(resort["latitude"], resort["longitude"])
+            # OpenWeather current API does not expose true snow depth; use recent snowfall estimate.
+            snow_1h_mm = (data.get("snow") or {}).get("1h")
+            snow_3h_mm = (data.get("snow") or {}).get("3h")
+            snow_mm = 0.0
+            if snow_1h_mm is not None:
+                snow_mm += float(snow_1h_mm)
+            if snow_3h_mm is not None:
+                snow_mm += float(snow_3h_mm)
+            if snow_mm > 0:
+                snow_depth_cm = round(snow_mm * 0.7, 1)
+            dt_value = data.get("dt")
+            if dt_value:
+                updated_at = time.strftime("%Y-%m-%dT%H:%M", time.gmtime(int(dt_value)))
         except Exception:
             snow_depth_cm = None
 

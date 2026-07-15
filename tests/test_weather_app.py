@@ -3,10 +3,10 @@ from unittest.mock import patch
 
 from weather_app import (
     _compute_apparent_temperature_c,
-    _get_weatherstack_api_key,
+    _get_openweather_api_key,
+    _openweather_condition_to_code,
     _select_felt_temperature,
     _select_felt_temperature_with_source,
-    _weatherstack_feels_like_temperature,
     calculate_feels_like_c,
     format_forecast_entry,
     get_icon_name_for_code,
@@ -97,31 +97,21 @@ class WeatherAppTests(unittest.TestCase):
         value = _compute_apparent_temperature_c(28, humidity_percent=70, wind_speed_ms=3)
         self.assertIsNotNone(value)
 
-    @patch("weather_app.os.getenv", return_value="demo-key")
-    @patch("weather_app._get_json")
-    def test_weatherstack_feels_like_temperature_parses_value(self, mock_get_json, _mock_getenv):
-        mock_get_json.return_value = {"current": {"feelslike": 14.6}}
-        self.assertEqual(_weatherstack_feels_like_temperature(41.0, 29.0), 14.6)
-
     @patch("weather_app.os.getenv")
-    def test_weatherstack_api_key_reads_fallback_env_names(self, mock_getenv):
+    def test_openweather_api_key_reads_fallback_env_names(self, mock_getenv):
         mapping = {
-            "WEATHERSTACK_API_KEY": "",
-            "WEATHERSTACK_ACCESS_KEY": "access-demo",
-            "WEATHERSTACK_KEY": "",
+            "OPENWEATHER_API_KEY": "",
+            "OPENWEATHER_KEY": "open-demo",
+            "OWM_API_KEY": "",
         }
         mock_getenv.side_effect = lambda name: mapping.get(name, "")
-        self.assertEqual(_get_weatherstack_api_key(), "access-demo")
+        self.assertEqual(_get_openweather_api_key(), "open-demo")
 
-    @patch("weather_app.os.getenv", return_value="demo-key")
-    @patch("weather_app._get_json")
-    def test_weatherstack_feels_like_temperature_fallbacks_on_error(self, mock_get_json, _mock_getenv):
-        mock_get_json.side_effect = RuntimeError("network")
-        self.assertIsNone(_weatherstack_feels_like_temperature(41.0, 29.0))
+    def test_openweather_condition_to_code_maps_clear(self):
+        self.assertEqual(_openweather_condition_to_code(800), 0)
 
-    @patch("weather_app.os.getenv", return_value="")
-    def test_weatherstack_feels_like_temperature_returns_none_without_api_key(self, _mock_getenv):
-        self.assertIsNone(_weatherstack_feels_like_temperature(41.0, 29.0))
+    def test_openweather_condition_to_code_maps_thunder(self):
+        self.assertEqual(_openweather_condition_to_code(211), 95)
 
     def test_select_felt_temperature_uses_computed_when_api_equals_temp(self):
         value = _select_felt_temperature(2, 65, 8, 2)
@@ -131,10 +121,10 @@ class WeatherAppTests(unittest.TestCase):
         value = _select_felt_temperature(22, 55, 3, 25.2)
         self.assertEqual(value, 25.2)
 
-    def test_select_felt_temperature_with_source_reports_weatherstack(self):
+    def test_select_felt_temperature_with_source_reports_openweather(self):
         value, source = _select_felt_temperature_with_source(22, 55, 3, 25.2)
         self.assertEqual(value, 25.2)
-        self.assertEqual(source, "weatherstack")
+        self.assertEqual(source, "openweather")
 
     def test_aliağa_prefers_turkey_match_over_spanish_alias(self):
         results = [

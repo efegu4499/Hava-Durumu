@@ -291,7 +291,7 @@ class WeatherWindow:
 
         self.status_message = tk.Label(
             self.card,
-            text="Canlı hava verisi Open-Meteo API'den gelir.",
+            text="Canlı hava verisi OpenWeather API'den gelir.",
             font=("Segoe UI", 10),
             bg="#ffffff",
             fg="#374151",

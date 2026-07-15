@@ -432,35 +432,8 @@ def get_example_weather_report():
     return format_forecast_entry("Pazartesi", "İzmir", 32, "Bulutlu")
 
 
-# Alternate source layer (met.no + Nominatim) to avoid Open-Meteo rate limits.
 _ALT_GEO_CACHE = {}
 _ALT_GEO_CACHE_TTL = 900
-
-_METNO_SYMBOL_TO_CODE = {
-    "clearsky": 0,
-    "fair": 1,
-    "partlycloudy": 2,
-    "cloudy": 3,
-    "fog": 45,
-    "lightrain": 61,
-    "rain": 63,
-    "heavyrain": 65,
-    "lightsleet": 66,
-    "sleet": 67,
-    "heavysleet": 67,
-    "lightsnow": 71,
-    "snow": 73,
-    "heavysnow": 75,
-    "rainshowers": 80,
-    "heavyrainshowers": 82,
-    "lightsnowshowers": 85,
-    "snowshowers": 86,
-    "heavysnowshowers": 86,
-    "thunder": 95,
-    "rainshowersandthunder": 95,
-    "heavyrainshowersandthunder": 95,
-    "snowshowersandthunder": 96,
-}
 
 
 def _to_float(value, default=None):
@@ -472,111 +445,123 @@ def _to_float(value, default=None):
         return default
 
 
-def _metno_symbol_to_code(symbol_code):
-    if not symbol_code:
-        return 3
-    key = symbol_code.split("_")[0].lower()
-    return _METNO_SYMBOL_TO_CODE.get(key, 3)
-
-
-def _is_snow_symbol(symbol_code):
-    if not symbol_code:
-        return False
-    return "snow" in symbol_code.split("_")[0].lower()
-
-
-def _nominatim_search(query_text, limit=10):
-    normalized = _normalize_text(query_text)
-    now = time.time()
-    cached = _ALT_GEO_CACHE.get((normalized, limit))
-    if cached and (now - cached[0]) < _ALT_GEO_CACHE_TTL:
-        return cached[1]
-
-    params = urlencode(
-        {
-            "q": query_text,
-            "format": "jsonv2",
-            "addressdetails": 1,
-            "limit": limit,
-            "accept-language": "tr,en",
-        }
-    )
-    url = f"https://nominatim.openstreetmap.org/search?{params}"
-    rows = _get_json(url) or []
-    out = []
-    for row in rows:
-        address = row.get("address") or {}
-        name = (
-            address.get("city")
-            or address.get("town")
-            or address.get("village")
-            or address.get("municipality")
-            or row.get("name")
-            or (row.get("display_name") or "").split(",")[0].strip()
-        )
-        if not name:
-            continue
-        item = {
-            "name": name,
-            "admin1": address.get("state") or address.get("region") or address.get("province"),
-            "admin2": address.get("county") or address.get("state_district"),
-            "country": address.get("country", "Bilinmiyor"),
-            "country_code": (address.get("country_code") or "").upper(),
-            "latitude": _to_float(row.get("lat")),
-            "longitude": _to_float(row.get("lon")),
-        }
-        if item["latitude"] is not None and item["longitude"] is not None:
-            out.append(item)
-
-    _ALT_GEO_CACHE[(normalized, limit)] = (time.time(), out)
-    return out
-
-
-def _metno_forecast(lat, lon):
-    query = urlencode({"lat": lat, "lon": lon})
-    url = f"https://api.met.no/weatherapi/locationforecast/2.0/complete?{query}"
-    return _get_json(url)
-
-
-def _get_weatherstack_api_key():
-    for key_name in ("WEATHERSTACK_API_KEY", "WEATHERSTACK_ACCESS_KEY", "WEATHERSTACK_KEY"):
+def _get_openweather_api_key():
+    for key_name in ("OPENWEATHER_API_KEY", "OPENWEATHER_KEY", "OWM_API_KEY"):
         value = (os.getenv(key_name) or "").strip()
         if value:
             return value
     return ""
 
 
-def _weatherstack_feels_like_temperature(lat, lon):
-    api_key = _get_weatherstack_api_key()
+def _country_name_from_code(code):
+    names = {
+        "TR": "Türkiye",
+        "ES": "İspanya",
+        "GB": "Birleşik Krallık",
+        "US": "ABD",
+        "DE": "Almanya",
+        "FR": "Fransa",
+        "IT": "İtalya",
+        "GR": "Yunanistan",
+        "RU": "Rusya",
+    }
+    code_u = (code or "").upper()
+    return names.get(code_u, code_u or "Bilinmiyor")
+
+
+def _openweather_condition_to_code(condition_id):
+    cid = int(_to_float(condition_id, 0) or 0)
+    if cid == 800:
+        return 0
+    if cid == 801:
+        return 1
+    if cid == 802:
+        return 2
+    if cid in {803, 804}:
+        return 3
+    if 200 <= cid <= 232:
+        return 95
+    if 300 <= cid <= 321:
+        return 53
+    if cid in {500, 501}:
+        return 61
+    if cid in {502, 503}:
+        return 63
+    if cid == 504:
+        return 65
+    if cid in {511, 611, 612, 613}:
+        return 66
+    if cid in {520, 521}:
+        return 80
+    if cid in {522, 531}:
+        return 82
+    if cid in {600, 601}:
+        return 71
+    if cid in {602, 622}:
+        return 75
+    if cid in {615, 616}:
+        return 85
+    if cid in {620, 621}:
+        return 86
+    if cid in {701, 711, 721, 731, 741, 751, 761, 762}:
+        return 45
+    return 3
+
+
+def _openweather_direct_geocode(query_text, limit=10):
+    api_key = _get_openweather_api_key()
     if not api_key:
-        return None
+        raise ValueError("OpenWeather API anahtari bulunamadi. OPENWEATHER_API_KEY tanimlayin.")
 
-    query = urlencode(
-        {
-            "access_key": api_key,
-            "query": f"{lat},{lon}",
-            "units": "m",
-            # Refresh this value every ~30s instead of being pinned by URL cache.
-            "cache_bust": int(time.time() // 30),
-        }
+    normalized = _normalize_text(query_text)
+    now = time.time()
+    cached = _ALT_GEO_CACHE.get((normalized, limit))
+    if cached and (now - cached[0]) < _ALT_GEO_CACHE_TTL:
+        return cached[1]
+
+    params = urlencode({"q": query_text, "limit": limit, "appid": api_key})
+    url = f"https://api.openweathermap.org/geo/1.0/direct?{params}"
+    rows = _get_json(url) or []
+    out = []
+    for row in rows:
+        country_code = (row.get("country") or "").upper()
+        out.append(
+            {
+                "name": row.get("name"),
+                "admin1": row.get("state"),
+                "admin2": None,
+                "country": _country_name_from_code(country_code),
+                "country_code": country_code,
+                "latitude": _to_float(row.get("lat")),
+                "longitude": _to_float(row.get("lon")),
+            }
+        )
+
+    out = [r for r in out if r.get("name") and r.get("latitude") is not None and r.get("longitude") is not None]
+    _ALT_GEO_CACHE[(normalized, limit)] = (time.time(), out)
+    return out
+
+
+def _openweather_current(lat, lon, lang="tr"):
+    api_key = _get_openweather_api_key()
+    if not api_key:
+        raise ValueError("OpenWeather API anahtari bulunamadi. OPENWEATHER_API_KEY tanimlayin.")
+    params = urlencode(
+        {"lat": lat, "lon": lon, "appid": api_key, "units": "metric", "lang": "tr" if lang == "tr" else "en"}
     )
+    url = f"https://api.openweathermap.org/data/2.5/weather?{params}"
+    return _get_json(url)
 
-    for base_url in (
-        "https://api.weatherstack.com/current",
-        "http://api.weatherstack.com/current",
-    ):
-        url = f"{base_url}?{query}"
-        try:
-            data = _get_json(url)
-        except Exception:
-            continue
 
-        current = (data or {}).get("current") or {}
-        feels_like = _to_float(current.get("feelslike"))
-        if feels_like is not None:
-            return feels_like
-
-    return None
+def _openweather_forecast(lat, lon, lang="tr"):
+    api_key = _get_openweather_api_key()
+    if not api_key:
+        raise ValueError("OpenWeather API anahtari bulunamadi. OPENWEATHER_API_KEY tanimlayin.")
+    params = urlencode(
+        {"lat": lat, "lon": lon, "appid": api_key, "units": "metric", "lang": "tr" if lang == "tr" else "en"}
+    )
+    url = f"https://api.openweathermap.org/data/2.5/forecast?{params}"
+    return _get_json(url)
 
 
 def _select_felt_temperature(temp_c, humidity_percent, wind_speed_ms, api_apparent_temp):
@@ -613,14 +598,14 @@ def _select_felt_temperature_with_source(temp_c, humidity_percent, wind_speed_ms
         if computed is not None and abs(computed - temp) >= 0.1:
             return computed, "calculated"
 
-    return round(api_value, 1), "weatherstack"
+    return round(api_value, 1), "openweather"
 
 
 def search_city(city_name):
     city_query, location_hint = _split_city_hint(city_name)
     preferred_country_code = _resolve_country_hint(location_hint)
     preferred_admin1 = None if preferred_country_code else _resolve_province_hint(location_hint)
-    results = _nominatim_search(city_query, limit=10)
+    results = _openweather_direct_geocode(city_query, limit=10)
 
     if not results:
         raise ValueError(f"{city_name} için şehir bulunamadı.")
@@ -649,7 +634,7 @@ def suggest_locations(query_text, limit=12):
     if len(query) < 2:
         return []
 
-    results = _nominatim_search(query, limit=max(24, limit * 2))
+    results = _openweather_direct_geocode(query, limit=max(24, limit * 2))
     suggestions = []
     seen = set()
     for result in results:
@@ -682,29 +667,25 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
         return deepcopy(cached_bundle[1])
 
     city = search_city(city_name)
-    raw = _metno_forecast(city["latitude"], city["longitude"])
-    timeseries = ((raw.get("properties") or {}).get("timeseries") or [])
-    if not timeseries:
+    current = _openweather_current(city["latitude"], city["longitude"], lang=lang)
+    forecast_raw = _openweather_forecast(city["latitude"], city["longitude"], lang=lang)
+    entries = forecast_raw.get("list") or []
+    if not current:
         raise ValueError("Hava verisi alınamadı.")
 
-    current_item = timeseries[0]
-    current_data = current_item.get("data") or {}
-    current_instant = (current_data.get("instant") or {}).get("details") or {}
-    current_symbol = (
-        ((current_data.get("next_1_hours") or {}).get("summary") or {}).get("symbol_code")
-        or ((current_data.get("next_6_hours") or {}).get("summary") or {}).get("symbol_code")
-        or ((current_data.get("next_12_hours") or {}).get("summary") or {}).get("symbol_code")
-    )
-    current_code = _metno_symbol_to_code(current_symbol)
-    wind_dir = _to_float(current_instant.get("wind_from_direction"))
-    current_temp = _to_float(current_instant.get("air_temperature"))
-    current_humidity = _to_float(current_instant.get("relative_humidity"))
-    current_wind_ms = _to_float(current_instant.get("wind_speed"))
+    current_main = current.get("main") or {}
+    current_wind = current.get("wind") or {}
+    current_weather = (current.get("weather") or [{}])[0]
+    current_code = _openweather_condition_to_code(current_weather.get("id"))
+    wind_dir = _to_float(current_wind.get("deg"))
+    current_temp = _to_float(current_main.get("temp"))
+    current_humidity = _to_float(current_main.get("humidity"))
+    current_wind_ms = _to_float(current_wind.get("speed"))
     apparent_temp, felt_source = _select_felt_temperature_with_source(
         current_temp,
         current_humidity,
         current_wind_ms,
-        _weatherstack_feels_like_temperature(city["latitude"], city["longitude"]),
+        _to_float(current_main.get("feels_like")),
     )
 
     weather = {
@@ -730,22 +711,22 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
     thunder_like_codes = {95, 96, 99}
 
     hourly_result = []
-    for item in timeseries[:hours]:
-        t = item.get("time") or ""
-        data_block = item.get("data") or {}
-        instant = (data_block.get("instant") or {}).get("details") or {}
-        one_hour = data_block.get("next_1_hours") or {}
-        details_1h = one_hour.get("details") or {}
-        symbol_code = (one_hour.get("summary") or {}).get("symbol_code")
-        code = _metno_symbol_to_code(symbol_code)
+    for item in entries[:hours]:
+        t = item.get("dt_txt") or ""
+        item_main = item.get("main") or {}
+        item_wind = item.get("wind") or {}
+        item_weather = (item.get("weather") or [{}])[0]
+        code = _openweather_condition_to_code(item_weather.get("id"))
         hour_label = t[11:16] if len(t) >= 16 else t
         try:
             hour_int = int(t[11:13]) if len(t) >= 13 else None
         except ValueError:
             hour_int = None
 
-        precip_mm = _to_float(details_1h.get("precipitation_amount"), 0.0)
-        snow_cm = round(precip_mm * 0.7, 2) if _is_snow_symbol(symbol_code) else 0.0
+        rain_3h = _to_float((item.get("rain") or {}).get("3h"), 0.0)
+        snow_3h = _to_float((item.get("snow") or {}).get("3h"), 0.0)
+        precip_mm = round(rain_3h + snow_3h, 2)
+        snow_cm = round(snow_3h * 0.7, 2)
 
         description = get_weather_description(code, lang=lang)
         icon_name = get_icon_name_for_code(code, hour=hour_int)
@@ -765,32 +746,30 @@ def get_weather_bundle(city_name, hours=24, days=5, lang="tr"):
         hourly_result.append(
             {
                 "time": hour_label,
-                "temperature": _to_float(instant.get("air_temperature")),
+                "temperature": _to_float(item_main.get("temp")),
                 "weather_code": code,
                 "description": description,
                 "icon_name": icon_name,
-                "wind_speed": _to_float(instant.get("wind_speed")),
-                "precipitation_probability": None,
+                "wind_speed": _to_float(item_wind.get("speed")),
+                "precipitation_probability": int(round((_to_float(item.get("pop"), 0.0) or 0.0) * 100)),
                 "precipitation_mm": precip_mm,
                 "snowfall_cm": snow_cm,
             }
         )
 
     daily_buckets = {}
-    for item in timeseries:
-        t = item.get("time") or ""
+    for item in entries:
+        t = item.get("dt_txt") or ""
         day_key = t[:10]
         if not day_key:
             continue
-        block = item.get("data") or {}
-        instant = (block.get("instant") or {}).get("details") or {}
-        one_hour = block.get("next_1_hours") or {}
-        details_1h = one_hour.get("details") or {}
-        symbol_code = (one_hour.get("summary") or {}).get("symbol_code")
-        code = _metno_symbol_to_code(symbol_code)
-        temp = _to_float(instant.get("air_temperature"))
-        precip = _to_float(details_1h.get("precipitation_amount"), 0.0)
-        snow = round(precip * 0.7, 2) if _is_snow_symbol(symbol_code) else 0.0
+        item_main = item.get("main") or {}
+        code = _openweather_condition_to_code((item.get("weather") or [{}])[0].get("id"))
+        temp = _to_float(item_main.get("temp"))
+        rain_3h = _to_float((item.get("rain") or {}).get("3h"), 0.0)
+        snow_3h = _to_float((item.get("snow") or {}).get("3h"), 0.0)
+        precip = rain_3h + snow_3h
+        snow = round(snow_3h * 0.7, 2)
 
         bucket = daily_buckets.setdefault(day_key, {"temps": [], "codes": [], "precip": 0.0, "snow": 0.0})
         if temp is not None:
